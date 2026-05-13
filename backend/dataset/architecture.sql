@@ -1,5 +1,11 @@
 -- MySQL database architecture for a student course management system (FULL)
 
+CREATE TABLE `department` (
+  `department_id` INT(3) NOT NULL,
+  `department_name` VARCHAR(20) NOT NULL,
+  PRIMARY KEY (`department_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `student_account` (
   `student_id` INT(9) NOT NULL,
   `password` VARCHAR(20) NOT NULL,
@@ -42,10 +48,4 @@ CREATE TABLE `course_record` (
   PRIMARY KEY (`student_id`, `course_id`),
   CONSTRAINT `fk_course_record_student_id` FOREIGN KEY (`student_id`) REFERENCES `student_account`(`student_id`),
   CONSTRAINT `fk_course_record_course_id` FOREIGN KEY (`course_id`) REFERENCES `course_information`(`course_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `department` (
-  `department_id` INT(3) NOT NULL,
-  `department_name` VARCHAR(20) NOT NULL,
-  PRIMARY KEY (`department_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
