@@ -1,3 +1,7 @@
+SET SQL_SAFE_UPDATES = 0;
+DELETE FROM course_information;
+SET SQL_SAFE_UPDATES = 1;
+
 INSERT IGNORE INTO course_information (course_id, course_name, course_type, teacher_name, department_id, credits) VALUES ('046001001', '程式設計概論', 'nan', '邱淑怡', '703', 3);
 INSERT IGNORE INTO course_information (course_id, course_name, course_type, teacher_name, department_id, credits) VALUES ('046001011', '程式設計概論', 'nan', '邱淑怡', '703', 3);
 INSERT IGNORE INTO course_information (course_id, course_name, course_type, teacher_name, department_id, credits) VALUES ('046001021', '程式設計概論', 'nan', '邱淑怡', '703', 3);

@@ -1,3 +1,7 @@
+SET SQL_SAFE_UPDATES = 0;
+DELETE FROM department;
+SET SQL_SAFE_UPDATES = 1;
+
 INSERT INTO department VALUES
 ('100', '文學院'),
 ('101', '中國文學系'),
