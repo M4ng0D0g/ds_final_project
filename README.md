@@ -8,3 +8,12 @@
 ```bash
 ./push.sh "commit message"
 ```
+
+## Preview
+https://gemini.google.com/share/0bf2827f4aa6
+
+
+修改 ds_final_project/.env (需要自己建立)
+設定
+USER=root
+PASSWORD=password(自己的密碼)
