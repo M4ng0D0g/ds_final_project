@@ -2,7 +2,6 @@ import asyncio
 import json
 import csv
 import os
-from glob import glob
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from database import AsyncSessionLocal  # 引入你的 Session 工廠
 from models import Base
@@ -76,6 +75,9 @@ async def main():
     await seed_data("course_information.csv")
     await seed_data("student_account.csv")
     await seed_data("course_record.csv")
+    await seed_data("graduation_requirements.csv")
+    await seed_data("requirement_rule.csv")
+    await seed_data("requirement_course_mapping.csv")
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -3,9 +3,9 @@
 
 from database import Base
 from .Accouunt import StudentAccount, TeacherAccount
-from .Department import Department
+from .Department import Department, GraduationRequirements, RequirementRule, RequirementCourseMapping
 from .Course import CourseInformation, CourseRecord
 # from .filename import Class
 
 # 這樣做可以方便外部直接 import
-__all__ = ["Base", "StudentAccount", "TeacherAccount", "Department", "CourseInformation", "CourseRecord"]
+__all__ = ["Base", "StudentAccount", "TeacherAccount", "Department", "GraduationRequirements", "RequirementRule", "RequirementCourseMapping", "CourseInformation", "CourseRecord"]

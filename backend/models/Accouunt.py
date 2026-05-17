@@ -1,6 +1,5 @@
-from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import String, ForeignKey, DateTime, func
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.mysql import INTEGER
 from database import Base

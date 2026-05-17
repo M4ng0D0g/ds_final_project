@@ -36,7 +36,18 @@ py -m seeds.seed_db
 
 ## 資料庫相關
 course_type
-- N 未定
-- R 必修
-- P 群修
-- E 選修
+- R 必修 required
+- P 群修 partially required
+- E 選修 elective
+- G 通識 general
+- CG 核心通識 core general
+    - C 中文通識 chinese
+    - F 外文通識 foreign
+    - H 人文通識 human
+    - S 社會通識 social
+    - N 自然通識 nature
+    - I 資訊通識 information
+    - A 書院通識 academic
+- RPE 體育必修
+- EPE 體育選修
+- CD 國防 civital defence
