@@ -42,3 +42,5 @@ htmlcov/
 # Editor / IDE
 .vscode/
 .idea/
+
+node_modules/

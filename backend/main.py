@@ -1,10 +1,9 @@
-import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import setup
 from seeds import seed_db
-from routers import course  # 匯入子路由
+from routers import course, account, student  # 匯入子路由
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -41,6 +40,8 @@ app.add_middleware(
 
 # 註冊其他模組的路由
 app.include_router(course.router)
+app.include_router(account.router)
+app.include_router(student.router)
 
 @app.get("/")
 def root():
