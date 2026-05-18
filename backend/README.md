@@ -1,5 +1,5 @@
 # Python + MySQL
-- Python 3.12.13
+- Python 3.12.10
     - FastAPI
     - sqlalchemy
     - Alembic
@@ -67,7 +67,7 @@ py -m seeds.seed_db
     - A 書院通識 academic
 - RPE 體育必修
 - EPE 體育選修
-- CD 國防 civital defence
+- CD 國防 civil defence
   
 ### 必修科目表結構
 graduation_requirements: 必修分數限制、總學分限制  

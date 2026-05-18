@@ -1,9 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-import setup
+from backend.routers import graduation
+import utils.setup as setup
 from seeds import seed_db
-from routers import course, account, student  # 匯入子路由
+from routers import course, graduation, authorization  # 匯入子路由
+from utils.exceptions import APIFailException, APIErrorException
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -27,7 +30,10 @@ app = FastAPI(
     description="包含課程查詢、學分計算、畢業規範檢核的核心後端框架",
     version="1.0.0",
     lifespan=lifespan,
+    root_path="/api/v1"
 )
+
+v1_router = APIRouter(prefix="/api/v1")
 
 # 允許跨來源請求（讓前端可以順利 call 你的 API，避免阻擋）
 app.add_middleware(
@@ -39,10 +45,39 @@ app.add_middleware(
 )
 
 # 註冊其他模組的路由
-app.include_router(course.router)
-app.include_router(account.router)
-app.include_router(student.router)
+v1_router.include_router(course.router, prefix="/course",)
+v1_router.include_router(authorization.router, prefix="/auth",)
+v1_router.include_router(graduation.router, prefix="/graduation",)
+
+app.include_router(v1_router)
 
 @app.get("/")
 def root():
     return {"message": "Welcome to NCCU Graduation Requirement Checker API!"}
+
+@app.exception_handler(APIFailException)
+async def api_fail_handler(request: Request, exc: APIFailException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "status": "fail",
+            "error": {
+                "code": exc.code,
+                "message": exc.message
+            }
+        }
+    )
+
+# 👮‍♂️ 攔截 5xx 系統錯誤 (error)
+@app.exception_handler(APIErrorException)
+async def api_error_handler(request: Request, exc: APIErrorException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "status": "error",
+            "error": {
+                "code": exc.code,
+                "message": exc.message
+            }
+        }
+    )

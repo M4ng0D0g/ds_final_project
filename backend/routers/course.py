@@ -4,12 +4,12 @@ from sqlalchemy import select, text
 from database import get_db
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from models.Course import CourseInformation, CourseRecord 
+from models.Course import CourseInformation
 from models.Department import Department
+from utils.jsend_schemas import JSendSuccessResponse
 
 router = APIRouter(
-    prefix="/courses",
-    tags=["Courses"]
+    tags=["Course"]
 )
 
 class CourseSearchRequest(BaseModel):
@@ -52,4 +52,4 @@ async def search_courses(payload: CourseSearchRequest, db: AsyncSession = Depend
     result = await db.execute(stmt)
     courses = result.scalars().all() # 撈出 ORM 物件清單
     
-    return {"success": True, "data": courses}
+    return JSendSuccessResponse(data=courses)
