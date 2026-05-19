@@ -3,7 +3,7 @@ services:
   db:
     image: mysql:8.0
     container_name: project_mysql
-    restart: always
+    restart: never
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: ds_final_project
@@ -20,7 +20,7 @@ services:
     container_name: project_backend
     restart: always
     ports:
-      - "8000:8000"
+      - "8080:8080"
     volumes:
       # 掛載本地 backend 資料夾到容器內的 /app/backend
       # 讓 python 可以透過 backend.* 方式匯入
@@ -36,7 +36,7 @@ services:
     build: 
       context: ./frontend
     container_name: project_frontend
-    restart: always
+    restart: never
     ports:
       - "5173:5173" # 若你用 Vite，請改成 "5173:5173"
     volumes:
