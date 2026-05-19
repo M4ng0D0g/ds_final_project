@@ -3,7 +3,7 @@ services:
   db:
     image: mysql:8.0
     container_name: project_mysql
-    restart: never
+    restart: no
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: ds_final_project
@@ -18,7 +18,7 @@ services:
     build: 
       context: ./backend
     container_name: project_backend
-    restart: always
+    restart: no
     ports:
       - "8080:8080"
     volumes:
