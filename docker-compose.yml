@@ -20,7 +20,7 @@ services:
     container_name: project_backend
     restart: no
     ports:
-      - "8080:8000"
+      - "8080:8080"
     volumes:
       # 掛載本地 backend 資料夾到容器內的 /app/backend
       # 讓 python 可以透過 backend.* 方式匯入
