@@ -7,12 +7,13 @@ from sqlalchemy import pool
 from alembic import context
 
 from dotenv import load_dotenv
-load_dotenv()
+
+# load_dotenv()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option("sqlalchemy.url", f"mysql+pymysql://{os.getenv("USER", "root")}:{os.getenv("PASSWORD", "password")}@localhost:3306/ds_final_project?charset=utf8mb4")
+config.set_main_option("sqlalchemy.url", f"mysql+pymysql://{os.getenv("USER", "root")}:{os.getenv("PASSWORD", "password")}@db:3306/ds_final_project?charset=utf8mb4")
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

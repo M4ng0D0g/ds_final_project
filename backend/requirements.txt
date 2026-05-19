@@ -6,3 +6,4 @@ asyncmy
 fastapi
 cryptography
 requests
+uvicorn

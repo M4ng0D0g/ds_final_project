@@ -1,10 +1,22 @@
 # Python + MySQL
-- Python 3.14.5
+- Python 3.12.10
     - FastAPI
     - sqlalchemy
     - Alembic
 
 SQL使用者預設為root  
+所有命令都是假設執行位置為backend
+
+## docker相關
+建立並啟動容器  
+```
+docker-compose up
+```
+
+清空
+```
+docker compose down -v
+```
 
 # Alembic
 https://alembic.sqlalchemy.org/en/latest/tutorial.html
@@ -33,9 +45,14 @@ py -m setup
 ```
 py -m seeds.seed_db
 ```
-
+  
 ## 資料庫相關
-course_type
+### 數據格式
+    以{table_name}為名的csv或json檔
+    需要在seeds/seed_db.py跟main.py中加入加載函數
+    在csv中，空值視為NULL而非''
+  
+###　course_type
 - R 必修 required
 - P 群修 partially required
 - E 選修 elective
@@ -50,4 +67,19 @@ course_type
     - A 書院通識 academic
 - RPE 體育必修
 - EPE 體育選修
-- CD 國防 civital defence
+- CD 國防 civil defence
+  
+### 必修科目表結構
+graduation_requirements: 必修分數限制、總學分限制  
+requirement_rule: 建立必修規則，約束需要滿足的課程數
+    規則可以是其他規則的子規則，由parent_rule_id定義
+    當子規則被滿足時，母規則滿足課程數+1
+
+requirement_course_mapping: 紀錄課程在哪個規則之下
+  
+檢查:
+    每有一種不同的alternative_course_id，母規則被滿足的規則數+1
+    NULL視為獨一無二的alternative_course_id
+
+## API相關
+全自動互動式文件: http://127.0.0.1:8080/docs

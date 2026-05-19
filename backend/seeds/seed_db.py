@@ -69,6 +69,8 @@ async def seed_data(file_name):
                             upsert_stmt = insert_stmt.on_duplicate_key_update(**update_dict)
                             await db.execute(upsert_stmt)   
                 await db.commit()
+        else:
+            print(f"檔案名稱: {file_name} 不存在")
 
 async def main():
     await seed_data("department.csv")

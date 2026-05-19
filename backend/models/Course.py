@@ -2,6 +2,7 @@ from typing import List, Optional
 from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.mysql import INTEGER
+from pydantic import ConfigDict
 from database import Base
 
 class CourseInformation(Base):
@@ -16,7 +17,9 @@ class CourseInformation(Base):
         ForeignKey("department.department_id"),
         nullable=False,
     )
+    
     credits: Mapped[int] = mapped_column(INTEGER(display_width=3), nullable=False)
+    
 
 class CourseRecord(Base):
     __tablename__ = "course_record"

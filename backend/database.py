@@ -6,11 +6,11 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy.orm import DeclarativeBase
 
 # 1. 載入 .env 環境變數
-load_dotenv()
+# load_dotenv()
 
 # 2. 取得資料庫連線字串 (預設使用 asyncmy 作為 MySQL 的非同步驅動)
 # 格式: mysql+asyncmy://user:password@host:port/dbname
-DATABASE_URL = f"mysql+asyncmy://{os.getenv("USER", "root")}:{os.getenv("PASSWORD", "password")}@localhost:3306/ds_final_project?charset=utf8mb4"
+DATABASE_URL = f"mysql+asyncmy://{os.getenv("USER", "root")}:{os.getenv("PASSWORD", "password")}@db:3306/ds_final_project?charset=utf8mb4"
 # print(DATABASE_URL)
 
 # 3. 建立非同步資料庫引擎 (Engine)
