@@ -289,7 +289,7 @@ async def rule_check(taken_set: set, rule: RequirementRule, db: AsyncSession):
     result = await db.execute(stmt)
 
     alternative_course_id_set = set()
-    earned = 0
+    total_earned = 0
     passed_course_count = 0
     missing_course_count = 0
     missing_courses = []
@@ -298,7 +298,7 @@ async def rule_check(taken_set: set, rule: RequirementRule, db: AsyncSession):
             if row.course_id in taken_set:
                 stmt = select(CourseInformation.credits).where(CourseInformation.course_id == row.course_id)
                 result = await db.execute(stmt)
-                earned += result.scalar() or 0
+                total_earned += result.scalar() or 0
                 passed_course_count += 1
             else:
                 missing_course_count = missing_course_count + 1
@@ -310,7 +310,7 @@ async def rule_check(taken_set: set, rule: RequirementRule, db: AsyncSession):
             if row.course_id in taken_set:
                 stmt = select(CourseInformation.credits).where(CourseInformation.course_id == row.course_id)
                 result = await db.execute(stmt)
-                earned += result.scalar() or 0
+                total_earned += result.scalar() or 0
                 passed_course_count += 1
             else:
                 missing_course_count = missing_course_count + 1
@@ -318,7 +318,7 @@ async def rule_check(taken_set: set, rule: RequirementRule, db: AsyncSession):
                 result = await db.execute(stmt)
                 missing_courses.append(result.scalar())
 
-            alternative_course_id_set.add(row.alternative_course_id)
+            alternative_course_id_set.add(row.alternative_course_id)     
     
     hint_variables = {}
     if rule.required_course_count is None:
@@ -326,11 +326,15 @@ async def rule_check(taken_set: set, rule: RequirementRule, db: AsyncSession):
     else:
         hint_variables["missing_course_count"] = rule.required_course_count - passed_course_count
     
+    course_earned = total_earned
+    if rule.required_credits:
+        hint_variables["missing_credits"] = rule.required_credits - course_earned
+    
     stmt = select(RequirementRule).where(RequirementRule.parent_rule_id == rule.rule_id)
     result = await db.execute(stmt)
     for row in result.scalars():
         a, b = await rule_check(taken_set, row, db)
-        earned += a
+        total_earned += a
         hint_variables[row.rule_name] = b
         if b == "":
             passed_course_count += 1
@@ -347,13 +351,14 @@ async def rule_check(taken_set: set, rule: RequirementRule, db: AsyncSession):
     hint_variables["missing_courses"] = re.sub(r'、+', '、', hint_variables["missing_courses"]).strip("、")
 
     hint = ""
-    if ((rule.required_course_count is None and missing_course_count > 0) or 
-        (rule.required_course_count is not None and rule.required_course_count > passed_course_count)):
+    if ((rule.required_course_count is None and missing_course_count > 0) or
+        (rule.required_course_count is not None and rule.required_course_count > passed_course_count) or
+        (rule.required_credits is not None and rule.required_credits > course_earned)):
         if rule.hint is not None:
             hint = rule.hint.format(**hint_variables)
             hint = re.sub(r'、+', '、', hint).strip("、")
     
-    return earned, hint.replace("\\n", "\n")
+    return total_earned, hint.replace("\\n", "\n")
 
 @router.get("/categories/{category_id}")
 async def get_categories(category_id: str, user: dict = Depends(get_user), db: AsyncSession = Depends(get_db)):
