@@ -31,6 +31,7 @@ class RequirementRule(Base):
     )
     rule_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     required_course_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    required_credits: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     parent_rule_id: Mapped[Optional[int]] = mapped_column(
         Integer,
         ForeignKey("requirement_rule.rule_id"),

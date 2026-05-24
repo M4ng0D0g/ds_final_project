@@ -17,9 +17,7 @@ class CourseInformation(Base):
         ForeignKey("department.department_id"),
         nullable=False,
     )
-    
     credits: Mapped[int] = mapped_column(INTEGER(display_width=3), nullable=False)
-    
 
 class CourseRecord(Base):
     __tablename__ = "course_record"
