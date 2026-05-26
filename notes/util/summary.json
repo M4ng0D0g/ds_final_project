@@ -18,7 +18,8 @@
             "name": "Yoga",
             "major1": "資訊科學系",
             "major2": null,
-            "auxiliary": null,
+            "auxiliary1": null,
+            "auxiliary2": null,
             "is_pass": true
           },
           "total_credits": {
@@ -27,8 +28,8 @@
           },
           "categories": [
             {
-              "id": "major_core",
-              "name": "本群主修",
+              "id": "major1",
+              "name": "主修",
               "earned": 65,
               "required": 65,
               "hint": "尚缺xx 課程"
@@ -53,6 +54,28 @@
               "earned": 12,
               "required": 7,
               "hint": "已超出必修學分，建議選修其他類別課程"
+            },
+            {
+              "id": "major2",
+              "name": "雙主修",
+              "earned": 65,
+              "required": 65,
+              "hint": "尚缺xx 課程"
+            },
+            {
+              "id": "auxiliary1",
+              "name": "輔系",
+              "earned": 65,
+              "required": 65,
+              "hint": "尚缺xx 課程"
+            }
+            ,
+            {
+              "id": "auxiliary2",
+              "name": "輔系",
+              "earned": 65,
+              "required": 65,
+              "hint": "尚缺xx 課程"
             }
           ]
         }

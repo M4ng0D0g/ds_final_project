@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import utils.setup as setup
 from seeds import seed_db
-from routers import course, graduation, authorization, import_data  # 匯入子路由
+from routers import course, graduation, authorization, import_data, teacher  # 匯入子路由
 from utils.exceptions import APIFailException, APIErrorException
 
 @asynccontextmanager
@@ -48,6 +48,7 @@ v1_router.include_router(course.router, prefix="/course",)
 v1_router.include_router(authorization.router, prefix="/auth",)
 v1_router.include_router(graduation.router, prefix="/graduation",)
 v1_router.include_router(import_data.router, prefix="/import",)
+v1_router.include_router(teacher.router, prefix="/teacher",)
 
 app.include_router(v1_router)
 

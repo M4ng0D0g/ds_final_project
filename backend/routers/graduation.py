@@ -27,7 +27,8 @@ async def get_summary(user: dict = Depends(get_user), db: AsyncSession = Depends
         "name": "",
         "major1": "",
         "major2": None,
-        "auxiliary": None,
+        "auxiliary1": None,
+        "auxiliary2": None,
         "is_pass": True
     }    
     
@@ -46,10 +47,15 @@ async def get_summary(user: dict = Depends(get_user), db: AsyncSession = Depends
         result = await db.execute(stmt)
         student_info["major2"] = result.scalar()
     
-    if student.department_auxiliary:
-        stmt = select(Department.department_name).where(Department.department_id == student.department_auxiliary)
+    if student.department_auxiliary1:
+        stmt = select(Department.department_name).where(Department.department_id == student.department_auxiliary1)
         result = await db.execute(stmt)
-        student_info["auxiliary"] = result.scalar()
+        student_info["auxiliary1"] = result.scalar()
+    
+    if student.department_auxiliary2:
+        stmt = select(Department.department_name).where(Department.department_id == student.department_auxiliary2)
+        result = await db.execute(stmt)
+        student_info["auxiliary2"] = result.scalar()
     
     total_credits = {"earned": 0, "required": 128}
 
@@ -58,10 +64,10 @@ async def get_summary(user: dict = Depends(get_user), db: AsyncSession = Depends
 
     categories = [
         {
-            "id": "major_core",
-            "name": "本群主修",
+            "id": "major1",
+            "name": "主修",
             "earned": 0,
-            "required": result.scalar() or 0,
+            "required": 0,
             "hint": ""
         },
         {
@@ -86,32 +92,14 @@ async def get_summary(user: dict = Depends(get_user), db: AsyncSession = Depends
             "hint": ""
         }
     ]
-
-    # 必修
-    stmt = (select(CourseRecord.course_id)
-            .where(CourseRecord.student_id == student.student_id, 
-                   CourseRecord.status == "passed", 
-                   CourseRecord.course_id.in_(
-                        select(RequirementCourseMapping.course_id)
-                        .join(RequirementRule)
-                        .where(RequirementRule.department_id == student.department_major1)
-                    )
-            )
-            .group_by(CourseRecord.course_id)
-    )
-    result = await db.execute(stmt)
-    taken_set = set(result.scalars().all())
     
-    stmt = select(RequirementRule).where(RequirementRule.department_id == student.department_major1, RequirementRule.parent_rule_id.is_(None))
-    result = await db.execute(stmt)
-    root_rule = result.scalar()
-    if root_rule:
-        categories[0]["earned"], categories[0]["hint"] = await rule_check(taken_set, root_rule, db)
+    # 必修
+    categories[0]["earned"], categories[0]["required"], categories[0]["hint"] = check_department_rule(student.student_id, student.department_major1, db)
 
     if categories[0]["earned"] < categories[0]["required"] or categories[0]["hint"] != "":
         student_info["is_pass"] = False
-
     total_credits["earned"] += categories[0]["earned"]
+        
     # print("必修檢查正常")
     # 選修
     subquery = (select(CourseRecord.course_id)
@@ -253,7 +241,7 @@ async def get_summary(user: dict = Depends(get_user), db: AsyncSession = Depends
         categories[2]["hint"] += tmp_hint
     if categories[2]["earned"] < 28:
         categories[2]["hint"] += f"尚缺{28 - categories[2]["earned"]}學分、"
-    categories[2]["hint"].strip("、")
+    categories[2]["hint"] = categories[2]["hint"].strip("、")
     total_credits["earned"] += categories[2]["earned"]
     # print("一般通識檢查正常")
     # 共同必修
@@ -272,10 +260,69 @@ async def get_summary(user: dict = Depends(get_user), db: AsyncSession = Depends
         student_info["is_pass"] = False
         categories[3]["hint"] = f"尚缺體育{4 - categories[3]["earned"]}學分"
 
+    # print("共同必修檢查正常")
+    # 雙主修
+    if student.department_major2:
+        major2 = {
+            {
+              "id": "major2",
+              "name": "雙主修",
+              "earned": 0,
+              "required": 0,
+              "hint": ""
+            }
+        }
+        major2["earned"], major2["required"], major2["hint"] = check_department_rule(student.student_id, student.department_major2, db)
 
+        if major2["earned"] < major2["required"] or major2["hint"] != "":
+            student_info["is_pass"] = False
+        total_credits["earned"] += major2["earned"]
+        total_credits["required"] += major2["required"]
+        
+        categories.append(major2)
+
+    # 輔系
+    if student.department_auxiliary1:
+        auxiliary1 = {
+            {
+              "id": "auxiliary1",
+              "name": "輔系",
+              "earned": 0,
+              "required": 0,
+              "hint": ""
+            }
+        }
+        auxiliary1["earned"], auxiliary1["required"], auxiliary1["hint"] = check_department_rule(student.student_id, student.department_auxiliary1, db)
+
+        if auxiliary1["earned"] < auxiliary1["required"] or auxiliary1["hint"] != "":
+            student_info["is_pass"] = False
+        total_credits["earned"] += auxiliary1["earned"]
+        total_credits["required"] += auxiliary1["required"]
+        
+        categories.append(auxiliary1)
+        
+    if student.department_auxiliary2:
+        auxiliary2 = {
+            {
+              "id": "auxiliary2",
+              "name": "雙主修",
+              "earned": 0,
+              "required": 0,
+              "hint": ""
+            }
+        }
+        auxiliary2["earned"], auxiliary2["required"], auxiliary2["hint"] = check_department_rule(student.student_id, student.department_auxiliary2, db)
+
+        if auxiliary2["earned"] < auxiliary2["required"] or auxiliary2["hint"] != "":
+            student_info["is_pass"] = False
+        total_credits["earned"] += auxiliary2["earned"]
+        total_credits["required"] += auxiliary2["required"]
+        
+        categories.append(auxiliary2)
+    
     if total_credits["earned"] < total_credits["required"]:
         student_info["is_pass"] = False
-    # print("共同必修檢查正常")
+    
     return {
         "data": {
             "student_info": student_info,
@@ -283,6 +330,36 @@ async def get_summary(user: dict = Depends(get_user), db: AsyncSession = Depends
             "categories": categories
         }
     }
+
+async def check_department_rule(student_id, department_id, db: AsyncSession):
+    earned = 0
+    required = 0
+    hint = ""
+    
+    result = await db.execute(select(GraduationRequirements.required_course_credits).where(GraduationRequirements.department_id == department_id))
+    required = result.scalar()
+    
+    stmt = (select(CourseRecord.course_id)
+            .where(CourseRecord.student_id == student_id, 
+                   CourseRecord.status == "passed", 
+                   CourseRecord.course_id.in_(
+                        select(RequirementCourseMapping.course_id)
+                        .join(RequirementRule)
+                        .where(RequirementRule.department_id == department_id)
+                    )
+            )
+            .group_by(CourseRecord.course_id)
+    )
+    result = await db.execute(stmt)
+    taken_set = set(result.scalars().all())
+    
+    stmt = select(RequirementRule).where(RequirementRule.department_id == department_id, RequirementRule.parent_rule_id.is_(None))
+    result = await db.execute(stmt)
+    root_rule = result.scalar()
+    if root_rule:
+        earned, hint = await rule_check(taken_set, root_rule, db)
+    
+    return earned, required, hint
 
 async def rule_check(taken_set: set, rule: RequirementRule, db: AsyncSession):
     stmt = select(RequirementCourseMapping).where(RequirementCourseMapping.rule_id == rule.rule_id)
@@ -374,8 +451,8 @@ async def get_categories(category_id: str, user: dict = Depends(get_user), db: A
     
     courses = []
     match category_id:
-        case "major_core":
-             stmt = (select(CourseInformation, CourseRecord)
+        case "major1":
+            stmt = (select(CourseInformation, CourseRecord)
                     .where(CourseInformation.course_id == CourseRecord.course_id,
                         CourseRecord.student_id == student.student_id, 
                         CourseRecord.course_id.in_(
@@ -414,7 +491,60 @@ async def get_categories(category_id: str, user: dict = Depends(get_user), db: A
                     CourseInformation.course_type == "RPE"
                 )
             )
-
+        case "major2":
+            if student.department_major2:
+                stmt = (select(CourseInformation, CourseRecord)
+                        .where(CourseInformation.course_id == CourseRecord.course_id,
+                            CourseRecord.student_id == student.student_id, 
+                            CourseRecord.course_id.in_(
+                                    select(RequirementCourseMapping.course_id)
+                                    .join(RequirementRule)
+                                    .where(RequirementRule.department_id == student.department_major2)
+                                )
+                        )
+                )
+            else:
+                raise APIFailException(
+                    code = "CATEGORY_NOT_FOUND",
+                    message= "使用者沒有雙主修",
+                    status_code=404
+                )
+        case "auxiliary1":
+            if student.department_auxiliary1:
+                stmt = (select(CourseInformation, CourseRecord)
+                        .where(CourseInformation.course_id == CourseRecord.course_id,
+                            CourseRecord.student_id == student.student_id, 
+                            CourseRecord.course_id.in_(
+                                    select(RequirementCourseMapping.course_id)
+                                    .join(RequirementRule)
+                                    .where(RequirementRule.department_id == student.department_auxiliary1)
+                                )
+                        )
+                )
+            else:
+                raise APIFailException(
+                    code = "CATEGORY_NOT_FOUND",
+                    message= "使用者沒有輔系",
+                    status_code=404
+                )
+        case "auxiliary2":
+            if student.department_auxiliary2:
+                stmt = (select(CourseInformation, CourseRecord)
+                        .where(CourseInformation.course_id == CourseRecord.course_id,
+                            CourseRecord.student_id == student.student_id, 
+                            CourseRecord.course_id.in_(
+                                    select(RequirementCourseMapping.course_id)
+                                    .join(RequirementRule)
+                                    .where(RequirementRule.department_id == student.department_auxiliary2)
+                                )
+                        )
+                )
+            else:
+                raise APIFailException(
+                    code = "CATEGORY_NOT_FOUND",
+                    message= "使用者沒有第二個輔系",
+                    status_code=404
+                )
         case _:
             raise APIFailException(
                 code = "CATEGORY_NOT_FOUND",

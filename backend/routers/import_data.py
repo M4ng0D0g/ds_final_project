@@ -51,13 +51,11 @@ async def import_student_data(file: UploadFile, db: AsyncSession = Depends(get_d
     try:
         result = await db.execute(select(StudentAccount).where(StudentAccount.student_id == student_data["aboutMe"]["studentNumber"]))
         if not result.scalar():
-            result = await db.execute(select(Department.department_id).where(Department.department_name == student_data["aboutMe"]["registerMajor"]))
-            department_id = result.scalar()
             db.add(StudentAccount(
                 student_id = student_data["aboutMe"]["studentNumber"],
                 password = "password",
                 user_name = student_data["aboutMe"]["chineseName"],
-                department_major1 = department_id
+                department_major1 = student_data["aboutMe"]["studentNumber"][3:6]
             ))
         
         await db.execute(delete(CourseRecord).where(CourseRecord.student_id == student_data["aboutMe"]["studentNumber"]))
