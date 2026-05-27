@@ -13,10 +13,42 @@ router = APIRouter(
 )
 
 TOKEN_SESSION_STORE = {}
+
+class RegisterPayload(BaseModel):
+    id: str
+    name: str
+    password: str
+    password_confirm: str
 class LoginPayload(BaseModel):
     id: str
     password: str
     
+
+@router.post(
+    "/register",
+    response_model=JSendSuccessResponse[dict]
+)
+async def register_account(payload: RegisterPayload, db: AsyncSession = Depends(get_db)):
+    "建立新使用者帳號 (學生或教師)"
+    """
+        如何判斷是學生還是教師呢?
+        
+        實作需求:
+            檢查payload是否合法?(id格式、密碼一致)
+            檢查帳號是否已被註冊
+            依據角色 將帳號資料存入對應的資料庫
+    """
+    return {
+        "data":{
+            "user": {
+                "id": payload.id,
+                "name": payload.name,
+                "role": "",
+                "department_id": ""
+          }
+        }
+    }
+
 @router.post(
     "/login",
     response_model=JSendSuccessResponse[dict]

@@ -1,5 +1,5 @@
 from typing import List, Optional
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.mysql import INTEGER
 from database import Base
@@ -16,7 +16,15 @@ class StudentAccount(Base):
         nullable=False,
     )
     department_major2: Mapped[Optional[int]] = mapped_column(String(3), ForeignKey("department.department_id"))
-    department_auxiliary: Mapped[Optional[int]] = mapped_column(String(3), ForeignKey("department.department_id"))
+    department_auxiliary1: Mapped[Optional[int]] = mapped_column(String(3), ForeignKey("department.department_id"))
+    department_auxiliary2: Mapped[Optional[int]] = mapped_column(String(3), ForeignKey("department.department_id"))
+    
+    __table_args__ = (
+        CheckConstraint(
+            "department_auxiliary1 IS NOT NULL OR department_auxiliary2 IS NULL", 
+            name="check_auxiliary_2_requires_auxiliary_1"
+        ),
+    )
     
 class TeacherAccount(Base):
     __tablename__ = "teacher_account"

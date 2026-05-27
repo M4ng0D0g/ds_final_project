@@ -18,8 +18,8 @@ class CourseSearchRequest(BaseModel):
     teacher: Optional[str] = Field(None, description="授課教師姓名，支援模糊查詢")
     course_type: Optional[str] = Field(None, description="課程類型")
     department: Optional[str] = Field(None, description="開課單位，支援id查詢或名稱模糊查詢")
-    page: int = Field(1)
-    size: int = Field(10)
+    page: Optional[int] = Field(1)
+    size: Optional[int] = Field(20)
 
 @router.post(
     "/search",
