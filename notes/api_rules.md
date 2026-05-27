@@ -1,6 +1,10 @@
-這是主頁的API
+這是主頁的API/教師點入個別學生API
 [summary](./util/summary.json)  
 登入系統的API
 [login](./util/login.json)  
 每個種類的修課紀錄的API
 [category](./util/category.json)
+教師端主頁API
+[teacher](./util/teacher.json)
+註冊系統API
+[register](./util/register.json)

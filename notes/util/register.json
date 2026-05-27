@@ -1,0 +1,64 @@
+{
+  "api_endpoint": "/api/v1/auth/register",
+  "method": "POST",
+  "description": "建立新使用者帳號 (學生或教師)",
+  "request": {
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "id": "string (required) - 使用者帳號 (通常為學號或教職員工號)",
+      "password": "string (required) - 密碼",
+      "password_confirm": "string (required) - 確認密碼，必須與 password 欄位一致",
+      "name": "string (required) - 使用者真實姓名",
+      "email": "string (required) - 聯絡信箱，用於忘記密碼與系統通知"
+    }
+  },
+  "responses": {
+    "201_created": {
+      "description": "帳號建立成功",
+      "body": {
+        "status": "success",
+        "data": {
+          "user": {
+            "id": "113703000",
+            "name": "michael_c",
+            "role": "student",
+            "email": "michael_c@example.edu.tw",
+            "department_id": "703"
+          }
+        }
+      }
+    },
+    "400_bad_request": {
+      "description": "請求格式錯誤、缺少必要欄位，或密碼不一致",
+      "body": {
+        "status": "error",
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "兩次輸入的密碼不一致"
+        }
+      }
+    },
+    "409_conflict": {
+      "description": "帳號 (id) 或信箱 (email) 已經被註冊",
+      "body": {
+        "status": "error",
+        "error": {
+          "code": "AUTH_USER_ALREADY_EXISTS",
+          "message": "此學號或教職員編號已註冊過系統"
+        }
+      }
+    },
+    "500_internal_server_error": {
+      "description": "伺服器內部錯誤（例如資料庫寫入失敗）",
+      "body": {
+        "status": "error",
+        "error": {
+          "code": "INTERNAL_SERVER_ERROR",
+          "message": "系統發生非預期錯誤，請稍後再試"
+        }
+      }
+    }
+  }
+}
