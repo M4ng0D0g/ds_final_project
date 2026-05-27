@@ -28,8 +28,7 @@ app = FastAPI(
     title="政大畢業學分檢核系統 API",
     description="包含課程查詢、學分計算、畢業規範檢核的核心後端框架",
     version="1.0.0",
-    lifespan=lifespan,
-    root_path="/api/v1"
+    lifespan=lifespan
 )
 
 v1_router = APIRouter(prefix="/api/v1")
