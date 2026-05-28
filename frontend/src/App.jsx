@@ -44,7 +44,7 @@ function App() {
     >
       {detail ? (
         <DetailView
-          catId={detail}
+          category={detail}
           onBack={() => setDetail(null)}
           onLogout={handleLogout}
           token={token}

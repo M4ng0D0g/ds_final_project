@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { API_BASE } from "../config";
+import { login } from "../api";
 
 const Login = ({ onLogin }) => {
   const [id, setId] = useState("");
@@ -10,31 +10,7 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
     setError("");
     try {
-      const res = await fetch(`http://localhost:8080/api/v1/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, password }),
-      });
-
-      // Safely parse JSON, tolerate empty or non-JSON responses
-      const parseJsonSafe = async (r) => {
-        try {
-          const txt = await r.text();
-          if (!txt) return null;
-          return JSON.parse(txt);
-        } catch (err) {
-          return null;
-        }
-      };
-
-      const body = await parseJsonSafe(res);
-
-      if (!res.ok) {
-        const msg = body?.error?.message || body?.message || "Login failed";
-        setError(msg);
-        return;
-      }
-
+      const body = await login(id, password);
       const token =
         body?.data?.token ||
         body?.token ||
@@ -45,7 +21,7 @@ const Login = ({ onLogin }) => {
       }
       onLogin(token);
     } catch (err) {
-      setError(String(err));
+      setError(err.message || String(err));
     }
   };
 
