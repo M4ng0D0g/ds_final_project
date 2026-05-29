@@ -13,6 +13,7 @@ async def lifespan(app: FastAPI):
     try:
         setup.run_migrations()
         await seed_db.seed_data("department.csv")
+        await seed_db.seed_data("teacher_account.csv")
         await seed_db.seed_data("course_information.csv")
         await seed_db.seed_data("student_account.csv")
         await seed_db.seed_data("course_record.csv")
@@ -28,8 +29,14 @@ app = FastAPI(
     title="政大畢業學分檢核系統 API",
     description="包含課程查詢、學分計算、畢業規範檢核的核心後端框架",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    #root_path="/api/v1"
 )
+@app.middleware("http")
+async def log_requests(request, call_next):
+    print(f"DEBUG: Incoming request: {request.method} {request.url.path}")
+    response = await call_next(request)
+    return response
 
 v1_router = APIRouter(prefix="/api/v1")
 
@@ -44,10 +51,10 @@ app.add_middleware(
 
 # 註冊其他模組的路由
 v1_router.include_router(course.router, prefix="/course",)
-v1_router.include_router(authorization.router, prefix="/auth",)
+v1_router.include_router(authorization.router, prefix="/auth")
 v1_router.include_router(graduation.router, prefix="/graduation",)
 v1_router.include_router(import_data.router, prefix="/import",)
-v1_router.include_router(teacher.router, prefix="/teacher",)
+v1_router.include_router(teacher.router, prefix="/teachers")
 
 app.include_router(v1_router)
 
