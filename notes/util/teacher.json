@@ -1,12 +1,12 @@
 {
-  "api_endpoint": "/api/v1/teachers/students/credit-progress",
+  "api_endpoint": "/api/v1/teacher/students/credit-progress",
   "method": "GET",
   "description": "取得學生總體學分進度列表，支援多維度篩選與分頁。",
   "request": {
     "headers": {
       "Authorization": "string (required) - Bearer Token，例如: Bearer eyJhbG..."
     },
-    "query_parameters": {
+    "body": {
       "enrollment_year": "string (optional) - 入學年度，例如: '113'",
       "department_id": "string (optional) - 科系代碼，例如: '703'",
       "category_id": "string (optional) - 學分類型篩選，例如: 'general_edu' (只列出該類別的進度)",

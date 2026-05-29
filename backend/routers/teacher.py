@@ -9,7 +9,7 @@ import math
 from database import get_db
 from models.Accouunt import StudentAccount
 from models.Department import Department
-# 假設你有以下 Model，實作真實學分計算時請取消註解並依照實際名稱引入
+# 假設你以下 Model，實作真實學分計算時請取消註解並依照實際名稱引入
 # from models.CourseRecord import CourseRecord
 # from models.GraduationRequirements import GraduationRequirements
 from routers.authorization import get_user

@@ -13,6 +13,12 @@ router = APIRouter(
 )
 
 TOKEN_SESSION_STORE = {}
+
+class RegisterPayload(BaseModel):
+    id: str
+    name: str
+    password: str
+    password_confirm: str
 class LoginPayload(BaseModel):
     id: str
     password: str
