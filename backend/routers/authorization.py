@@ -16,7 +16,99 @@ TOKEN_SESSION_STORE = {}
 class LoginPayload(BaseModel):
     id: str
     password: str
+
+class RegisterPayload(BaseModel):
+    id: str
+    password: str
+    password_confirm: str
+    name: str
+    email: str
+
+@router.post(
+    "/register",
+    status_code=201,
+    response_model=JSendSuccessResponse[dict]
+)
+async def register_account(payload: RegisterPayload, db: AsyncSession = Depends(get_db)):
+    """建立新使用者帳號 (學生或教師)"""
     
+    if payload.password != payload.password_confirm:
+        raise APIFailException(
+            code="VALIDATION_ERROR",
+            message="兩次輸入的密碼不一致",
+            status_code=400
+        )
+
+    try:
+        stmt_student = select(StudentAccount).where(StudentAccount.student_id == payload.id)
+        result_student = await db.execute(stmt_student)
+        existing_student = result_student.scalar()
+
+        stmt_teacher = select(TeacherAccount).where(TeacherAccount.teacher_id == payload.id)
+        result_teacher = await db.execute(stmt_teacher)
+        existing_teacher = result_teacher.scalar()
+
+        if existing_student or existing_teacher:
+            raise APIFailException(
+                code="AUTH_USER_ALREADY_EXISTS",
+                message="此學號或教職員編號已註冊過系統",
+                status_code=409
+            )
+
+        # 3. 判斷身分並建立帳號
+        # 備註：由於 payload 中沒有明確的 role 欄位，這裡依照台灣大專院校常見規則，
+        # 假設 9 碼全數字的 id 為學生 (如 113703000)，其餘視為教師。你可以依照實際業務邏輯調整。
+        is_student = payload.id.isdigit() and len(payload.id) == 9
+        role = "student" if is_student else "teacher"
+
+        if is_student:
+            department_id = payload.id[3:6] if len(payload.id) >= 6 else "703"
+            new_user = StudentAccount(
+                student_id=payload.id,
+                password=payload.password, # 實務上建議在此處將密碼進行 Hash 處理 (例如使用 bcrypt)
+                user_name=payload.name,
+                department_major1=department_id
+            )
+            department_id = payload.id[3:6] if len(payload.id) >= 6 else "unknown"
+        else:
+            department_id = "703"
+            new_user = TeacherAccount(
+                teacher_id=payload.id,
+                password=payload.password, 
+                user_name=payload.name,
+                department_id=department_id
+            )
+            department_id = "teacher_dept"
+
+        db.add(new_user)
+        await db.commit()
+        
+        return {
+            "data": {
+                "user": {
+                    "id": payload.id,
+                    "name": payload.name,
+                    "role": role,
+                    "email": payload.email,
+                    "department_id": department_id
+                }
+            }
+        }
+
+    except APIFailException:
+        # 將業務邏輯的自定義 Exception 往上拋，交給全域 Exception Handler 處理
+        raise
+    except Exception as e:
+        # 5. 處理伺服器內部錯誤 (500 Internal Server Error)
+        print(f"[Fatal Error](register): {e}")
+        # 若發生錯誤，退回資料庫交易
+        await db.rollback() 
+        raise APIFailException(
+            code="INTERNAL_SERVER_ERROR",
+            message="系統發生非預期錯誤，請稍後再試",
+            status_code=500
+        )
+
 @router.post(
     "/login",
     response_model=JSendSuccessResponse[dict]
