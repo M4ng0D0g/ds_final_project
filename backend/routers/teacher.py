@@ -30,7 +30,7 @@ class CreditProgressQuery(BaseModel):
 async def get_credit_progress(payload: CreditProgressQuery, user: dict = Depends(get_user), db: AsyncSession = Depends(get_db)):
     if not user["role"] == "teacher":
         raise APIFailException(
-            code="BAD_REQUEST",
+            code="Bad request",
             message="使用者身份不是教師"
         )
         

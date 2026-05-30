@@ -81,12 +81,12 @@
         }
       }
     },
-    "401_unauthorized": {
+    "401_Unauthorized": {
       "description": "未提供 Token 或 Token 已失效",
       "body": {
         "status": "error",
         "error": {
-          "code": "UNAUTHORIZED",
+          "code": "Unauthorized",
           "message": "請先登入系統"
         }
       }

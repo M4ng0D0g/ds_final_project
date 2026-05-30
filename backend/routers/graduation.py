@@ -18,7 +18,7 @@ async def get_summary(user: dict = Depends(get_user), db: AsyncSession = Depends
     """取得主頁儀表板 (Dashboard) 統計數據，僅包含學生資訊與各區塊學分進度，不包含課程明細"""
     if not user["role"] == "student":
         raise APIFailException(
-            code="BAD_REQUEST",
+            code="Bad request",
             message="使用者身份不是學生"
         )
 
@@ -259,18 +259,16 @@ async def get_summary(user: dict = Depends(get_user), db: AsyncSession = Depends
     if categories[3]["earned"] < 4:
         student_info["is_pass"] = False
         categories[3]["hint"] = f"尚缺體育{4 - categories[3]["earned"]}學分"
-
     # print("共同必修檢查正常")
+    
     # 雙主修
     if student.department_major2:
         major2 = {
-            {
-              "id": "major2",
-              "name": "雙主修",
-              "earned": 0,
-              "required": 0,
-              "hint": ""
-            }
+            "id": "major2",
+            "name": "雙主修",
+            "earned": 0,
+            "required": 0,
+            "hint": ""
         }
         major2["earned"], major2["required"], major2["hint"] = await check_department_rule(student.student_id, student.department_major2, db)
 
@@ -284,13 +282,11 @@ async def get_summary(user: dict = Depends(get_user), db: AsyncSession = Depends
     # 輔系
     if student.department_auxiliary1:
         auxiliary1 = {
-            {
-              "id": "auxiliary1",
-              "name": "第一輔系",
-              "earned": 0,
-              "required": 0,
-              "hint": ""
-            }
+            "id": "auxiliary1",
+            "name": "第一輔系",
+            "earned": 0,
+            "required": 0,
+            "hint": ""
         }
         auxiliary1["earned"], auxiliary1["required"], auxiliary1["hint"] = await check_department_rule(student.student_id, student.department_auxiliary1, db)
 
@@ -303,13 +299,11 @@ async def get_summary(user: dict = Depends(get_user), db: AsyncSession = Depends
         
     if student.department_auxiliary2:
         auxiliary2 = {
-            {
-              "id": "auxiliary2",
-              "name": "第二輔系",
-              "earned": 0,
-              "required": 0,
-              "hint": ""
-            }
+            "id": "auxiliary2",
+            "name": "第二輔系",
+            "earned": 0,
+            "required": 0,
+            "hint": ""
         }
         auxiliary2["earned"], auxiliary2["required"], auxiliary2["hint"] = await check_department_rule(student.student_id, student.department_auxiliary2, db)
 
@@ -335,7 +329,7 @@ async def check_department_rule(student_id, department_id, db: AsyncSession):
     earned = 0
     required = 0
     hint = ""
-    
+
     result = await db.execute(select(GraduationRequirements.required_course_credits).where(GraduationRequirements.department_id == department_id))
     required = result.scalar()
     
@@ -356,6 +350,7 @@ async def check_department_rule(student_id, department_id, db: AsyncSession):
     stmt = select(RequirementRule).where(RequirementRule.department_id == department_id, RequirementRule.parent_rule_id.is_(None))
     result = await db.execute(stmt)
     root_rule = result.scalar()
+
     if root_rule:
         earned, hint = await rule_check(taken_set, root_rule, db)
     
@@ -442,7 +437,7 @@ async def get_categories(category_id: str, user: dict = Depends(get_user), db: A
     """取得特定學分區塊的詳細進度與課程清單（用於點擊 Block 後跳轉的新頁面）"""
     if not user["role"] == "student":
         raise APIFailException(
-            code="BAD_REQUEST",
+            code="Bad request",
             message="使用者身份不是學生"
         )
     stmt = select(StudentAccount).where(StudentAccount.student_id == user["id"])
@@ -505,7 +500,7 @@ async def get_categories(category_id: str, user: dict = Depends(get_user), db: A
                 )
             else:
                 raise APIFailException(
-                    code = "CATEGORY_NOT_FOUND",
+                    code = "Category Not Found",
                     message= "使用者沒有雙主修",
                     status_code=404
                 )
@@ -523,7 +518,7 @@ async def get_categories(category_id: str, user: dict = Depends(get_user), db: A
                 )
             else:
                 raise APIFailException(
-                    code = "CATEGORY_NOT_FOUND",
+                    code = "Category Not Found",
                     message= "使用者沒有輔系",
                     status_code=404
                 )
@@ -541,13 +536,13 @@ async def get_categories(category_id: str, user: dict = Depends(get_user), db: A
                 )
             else:
                 raise APIFailException(
-                    code = "CATEGORY_NOT_FOUND",
+                    code = "Category Not Found",
                     message= "使用者沒有第二輔系",
                     status_code=404
                 )
         case _:
             raise APIFailException(
-                code = "CATEGORY_NOT_FOUND",
+                code = "Category Not Found",
                 message= "無效的類別 ID",
                 status_code=404
             )

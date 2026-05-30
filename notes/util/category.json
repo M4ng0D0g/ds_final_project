@@ -48,7 +48,7 @@
       "body": {
         "status": "error",
         "error": {
-          "code": "CATEGORY_NOT_FOUND",
+          "code": "Category Not Found",
           "message": "無效的類別 ID"
         }
       }

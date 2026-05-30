@@ -28,7 +28,7 @@
         }
       }
     },
-    "400_bad_request": {
+    "400_Bad request": {
       "description": "請求格式錯誤、缺少必要欄位，或密碼不一致",
       "body": {
         "status": "error",
