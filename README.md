@@ -38,6 +38,11 @@ docker-compose down
 docker-compose down -v
 ```
 
+載入預設資料
+```bash
+docker-compose exec backend python -m seeds.seed_db
+```
+
 ## Preview
 https://gemini.google.com/share/0bf2827f4aa6
 

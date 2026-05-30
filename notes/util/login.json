@@ -26,7 +26,7 @@
         }
       }
     },
-    "400_bad_request": {
+    "400_Bad request": {
       "description": "請求格式錯誤或缺少必要欄位",
       "body": {
         "status": "error",
@@ -36,7 +36,7 @@
         }
       }
     },
-    "401_unauthorized": {
+    "401_Unauthorized": {
       "description": "憑證無效或密碼錯誤",
       "body": {
         "status": "error",

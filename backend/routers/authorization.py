@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text
+from sqlalchemy import select, update
 from database import get_db
 from pydantic import BaseModel
 import uuid
@@ -22,7 +22,11 @@ class RegisterPayload(BaseModel):
 class LoginPayload(BaseModel):
     id: str
     password: str
-    
+
+class ResetPasswordPayload(BaseModel):
+    id: str
+    password: str
+    password_confirm: str
 
 @router.post(
     "/register",
@@ -121,7 +125,7 @@ async def account_verify(payload: LoginPayload, db: AsyncSession = Depends(get_d
         print(f"[Fatal Error](login): {e}")
         
     raise APIFailException(
-        code="unauthorized",
+        code="Unauthorized",
         message="帳號不存在或密碼錯誤",
         status_code = 401
     )
@@ -149,10 +153,40 @@ async def get_user(token: str = Header(..., description="請傳入登入時拿�
     user: dict = TOKEN_SESSION_STORE.get(token)
     if not user:
         raise APIFailException(
-            code="unauthorized",
+            code="Unauthorized",
             message="Token 已過期或無效，請重新登入",
             status_code=401
         )
     return user
-    
-    
+
+@router.post(
+    "/reset_password",
+    response_model=JSendSuccessResponse[dict]
+)
+async def reset_password(payload: ResetPasswordPayload, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(StudentAccount).where(StudentAccount.student_id == payload.id))
+    user = result.scalar_one_or_none()
+    if not user:
+        result = await db.execute(select(TeacherAccount).where(TeacherAccount.teacher_id == payload.id))
+        user = result.scalar_one_or_none()
+    if user:
+        if payload.password == payload.password_confirm:
+            user.password = payload.password
+            await db.commit()
+            return {
+                "data": {
+                    "message": "密碼重設成功"
+                }
+            }
+        else:
+            raise APIFailException(
+                code="Bad request",
+                message="密碼與確認密碼不同"
+            )
+    else:
+        raise APIFailException(
+            code="Unauthorized",
+            message="帳號不存在",
+            status_code = 401
+        )
+        

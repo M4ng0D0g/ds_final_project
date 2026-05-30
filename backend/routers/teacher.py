@@ -30,16 +30,16 @@ class CreditProgressQuery(BaseModel):
 
 @router.post("/students/credit-progress")
 async def get_credit_progress(
-    payload: CreditProgressQuery, 
-    #user: dict = Depends(get_user), 
+    payload: CreditProgressQuery,
+    user: dict = Depends(get_user),
     db: AsyncSession = Depends(get_db)
 ):
     # 1. 權限驗證
-   #if user.get("role") != "teacher":
-        #raise APIFailException(
-            #code="UNAUTHORIZED",
-            #message="使用者身份不是教師"
-        #)
+    if user.get("role") != "teacher":
+        raise APIFailException(
+            code="UNAUTHORIZED",
+            message="使用者身份不是教師"
+        )
         
     try:
         # ==========================================
