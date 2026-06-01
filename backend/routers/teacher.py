@@ -99,14 +99,11 @@ async def get_credit_progress(
                 "is_pass": True
             }    
             
-            result = await db.execute(select(StudentAccount).where(StudentAccount.student_id == student.student_id))
-            student = result.scalar_one()
-            
             student_info["student_id"] = student.student_id
             student_info["name"] = student.user_name
-            
+
             student_info["major1"] = department_name_map.get(  
-                student.department_major1, ""  
+                student.department_major1
             )  
 
             if student.department_major2:  
@@ -123,7 +120,7 @@ async def get_credit_progress(
                 student_info["auxiliary2"] = department_name_map.get(  
                     student.department_auxiliary2  
                 )
-            
+                
             total_credits = {"earned": 0, "required": 128}
 
             categories = [
@@ -166,57 +163,43 @@ async def get_credit_progress(
                 
             # print("必修檢查正常")
             # 選修
-            subquery = (select(CourseRecord.course_id)
+            elective_subquery = (
+                select(CourseRecord.course_id)
                 .join(CourseInformation)
-                .where(CourseRecord.student_id == student.student_id, 
+                .where(
+                    CourseRecord.student_id == student.student_id,
                     CourseRecord.status == "passed",
                     CourseInformation.course_type.in_(["R", "P", "E"]),
                     CourseRecord.course_id.not_in(
-                                select(RequirementCourseMapping.course_id)
-                                .join(RequirementRule)
-                                .where(RequirementRule.department_id == student.department_major1)
-                            )
-                    )
+                        select(RequirementCourseMapping.course_id)
+                        .join(RequirementRule)
+                        .where(RequirementRule.department_id == student.department_major1)
+                    ),
+                )
                 .group_by(CourseRecord.course_id)
             )
-            stmt = select(func.sum(CourseInformation.credits)).where(CourseInformation.course_id.in_(subquery))
-            result = await db.execute(stmt)
-            categories[1]["earned"] = int(result.scalar() or 0) 
+            categories[1]["earned"] = int(
+                await db.scalar(
+                    select(func.sum(CourseInformation.credits)).where(CourseInformation.course_id.in_(elective_subquery))
+                )
+                or 0
+            )
             total_credits["earned"] += categories[1]["earned"]
             # print("選修檢查正常")
-            # 中文
-            subquery = (select(CourseRecord.course_id)
-                .join(CourseInformation)
-                .where(CourseRecord.student_id == student.student_id, 
-                    CourseRecord.status == "passed", 
-                    CourseInformation.course_type == "GC",
-                    )
-                .group_by(CourseRecord.course_id)
+
+            general_stmt = (
+                select(CourseInformation.course_type, CourseInformation.credits)
+                .join(CourseRecord, CourseInformation.course_id == CourseRecord.course_id)
+                .where(
+                    CourseRecord.student_id == student.student_id,
+                    CourseRecord.status == "passed",
+                    CourseInformation.course_type.in_(
+                        ["GC", "GF", "CGH", "CGS", "CGN", "GH", "GS", "GN", "GI", "RPE"]
+                    ),
+                )
             )
-            stmt = select(func.sum(CourseInformation.credits)).where(CourseInformation.course_id.in_(subquery))
-            result = await db.execute(stmt)
-            GC_earned = min(result.scalar() or 0, 6)
-            if GC_earned < 3:
-                student_info["is_pass"] = False
-                categories[2]["hint"] += f"尚缺中文通{3 - GC_earned}學分、"
-            # print("中文通檢查正常")
-            # 外文
-            subquery = (select(CourseRecord.course_id)
-                .join(CourseInformation)
-                .where(CourseRecord.student_id == student.student_id, 
-                    CourseRecord.status == "passed", 
-                    CourseInformation.course_type == "GF",
-                    )
-                .group_by(CourseRecord.course_id)
-            )
-            stmt = select(func.sum(CourseInformation.credits)).where(CourseInformation.course_id.in_(subquery))
-            result = await db.execute(stmt)
-            GF_earned = min(result.scalar() or 0, 6)
-            if GF_earned < 6:
-                student_info["is_pass"] = False
-                categories[2]["hint"] += f"尚缺外文通{6 - GF_earned}學分、"
-            # print("外文通檢查正常")
-            # 一般
+
+            result = await db.execute(general_stmt)
             general = {
                 "CGH": False,
                 "CGS": False,
@@ -224,68 +207,59 @@ async def get_credit_progress(
                 "GH": 0,
                 "GS": 0,
                 "GN": 0,
-                "GI": 0 
+                "GI": 0,
             }
-            subquery = (select(CourseRecord.course_id)
-                .join(CourseInformation)
-                .where(CourseRecord.student_id == student.student_id, 
-                    CourseRecord.status == "passed", 
-                    CourseInformation.course_type.in_(["CGH", "CGS", "CGN", "GH", "GS", "GN", "GI"]),
-                    )
-                .group_by(CourseRecord.course_id)
-            )
-            stmt = select(CourseInformation.course_type, CourseInformation.credits).where(CourseInformation.course_id.in_(subquery))
-            result = await db.execute(stmt)
+            GC_earned = 0
+            GF_earned = 0
+            rpe_credits = 0
 
             for row in result.mappings():
-                match row["course_type"]:
-                    case "CGH":
-                        general["CGH"] = True
-                    case "CGS":
-                        general["CGS"] = True
-                    case "CGN":
-                        general["CGN"] = True
-                general[row["course_type"].strip("C")] += row["credits"]
-
-            subquery = (select(CourseRecord.course_id)
-                .join(CourseInformation)
-                .where(CourseRecord.student_id == student.student_id, 
-                    CourseRecord.status == "passed", 
-                    CourseInformation.course_type.ilike("G%"),
-                    CourseInformation.course_type.not_ilike("G_"),
-                    )
-                .group_by(CourseRecord.course_id)
-            )
-            stmt = select(CourseInformation.course_type, CourseInformation.credits).where(CourseInformation.course_id.in_(subquery))
-            result = await db.execute(stmt)
-
-            for row in result.mappings():
-                domains = list(row["course_type"].strip("G"))
+                course_type = row["course_type"]
                 credits = row["credits"]
-                target_domain = min(domains, key=lambda d: general[f"G{d}"])
-                general[f"G{target_domain}"] += credits
-                
+
+                if course_type == "GC":
+                    GC_earned += credits
+                elif course_type == "GF":
+                    GF_earned += credits
+                elif course_type in ("CGH", "CGS", "CGN"):
+                    general[course_type] = True
+                    general[course_type.strip("C")] += credits
+                elif course_type in ("GH", "GS", "GN", "GI"):
+                    general[course_type] += credits
+                elif course_type == "RPE":
+                    rpe_credits += credits
+
+            GC_earned = min(GC_earned, 6)
+            GF_earned = min(GF_earned, 6)
             general["GH"] = min(general["GH"], 7)
             general["GS"] = min(general["GS"], 7)
             general["GN"] = min(general["GN"], 7)
             general["GI"] = min(general["GI"], 3)
-            
+
+            if GC_earned < 3:
+                student_info["is_pass"] = False
+                categories[2]["hint"] += f"尚缺中文通{3 - GC_earned}學分、"
+            if GF_earned < 6:
+                student_info["is_pass"] = False
+                categories[2]["hint"] += f"尚缺外文通{6 - GF_earned}學分、"
+
             if general["GH"] < 3:
                 student_info["is_pass"] = False
-                categories[2]["hint"] += f"尚缺人文通{3 - general["GH"]}學分、"
+                categories[2]["hint"] += f"尚缺人文通{3 - general['GH']}學分、"
             if general["GS"] < 3:
                 student_info["is_pass"] = False
-                categories[2]["hint"] += f"尚缺社會通{3 - general["GS"]}學分、"
+                categories[2]["hint"] += f"尚缺社會通{3 - general['GS']}學分、"
             if general["GN"] < 3:
                 student_info["is_pass"] = False
-                categories[2]["hint"] += f"尚缺自然通{3 - general["GN"]}學分、"
-            if student.department_major1 not in ["304", "306", "703", "701", "ZU1"]:
-                if general["GI"] < 3:
-                    student_info["is_pass"] = False
-                    categories[2]["hint"] += f"尚缺資訊通{2 - general["GI"]}學分、"
-            
-            categories[2]["earned"] = int(min(GC_earned + GF_earned + general["GH"] + general["GS"] + general["GN"] + general["GI"], 28))
-            print(type(categories[2]["earned"]))
+                categories[2]["hint"] += f"尚缺自然通{3 - general['GN']}學分、"
+            if student.department_major1 not in ["304", "306", "703", "701", "ZU1"] and general["GI"] < 3:
+                student_info["is_pass"] = False
+                categories[2]["hint"] += f"尚缺資訊通{3 - general['GI']}學分、"
+
+            categories[2]["earned"] = int(
+                min(GC_earned + GF_earned + general["GH"] + general["GS"] + general["GN"] + general["GI"], 28)
+            )
+
             core = 0
             tmp_hint = ""
             if not general["CGH"]:
@@ -300,6 +274,7 @@ async def get_credit_progress(
                 tmp_hint += "尚缺自然核通、"
             else:
                 core += 1
+
             if core < 2:
                 student_info["is_pass"] = False
                 categories[2]["hint"] += tmp_hint
@@ -308,23 +283,13 @@ async def get_credit_progress(
             categories[2]["hint"] = categories[2]["hint"].strip("、")
             total_credits["earned"] += categories[2]["earned"]
             # print("一般通識檢查正常")
-            # 共同必修
-            subquery = (select(CourseRecord.course_id)
-                .join(CourseInformation)
-                .where(CourseRecord.student_id == student.student_id, 
-                    CourseRecord.status == "passed", 
-                    CourseInformation.course_type == "RPE",
-                    )
-                .group_by(CourseRecord.course_id)
-            )
-            stmt = select(func.count(CourseInformation.credits)).where(CourseInformation.course_id.in_(subquery))
-            result = await db.execute(stmt)
-            categories[3]["earned"] = min(result.scalar() or 0, 4)
+
+            categories[3]["earned"] = int(min(rpe_credits, 4))
             if categories[3]["earned"] < 4:
                 student_info["is_pass"] = False
                 categories[3]["hint"] = f"尚缺體育{4 - categories[3]["earned"]}學分"
             # print("共同必修檢查正常")
-            
+
             # 雙主修
             if student.department_major2:
                 major2 = {

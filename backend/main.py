@@ -32,11 +32,11 @@ app = FastAPI(
     lifespan=lifespan,
     root_path="/api"
 )
-@app.middleware("http")
-async def log_requests(request, call_next):
-    print(f"DEBUG: Incoming request: {request.method} {request.url.path}")
-    response = await call_next(request)
-    return response
+# @app.middleware("http")
+# async def log_requests(request, call_next):
+#     print(f"DEBUG: Incoming request: {request.method} {request.url.path}")
+#     response = await call_next(request)
+#     return response
 
 v1_router = APIRouter(prefix="/v1")
 
