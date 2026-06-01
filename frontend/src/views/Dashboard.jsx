@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useMemo } from "react";
 import CategoryCard from "../components/CategoryCard";
+import HintBox from "../components/HintBox";
 import { getDashboardSummary } from "../api";
 
 const CATEGORY_COLORS = [
@@ -16,6 +17,7 @@ const mapBackendCategory = (category, index) => {
     id: category.id,
     title: category.name,
     subtitle: hint || category.id,
+    hint,
     earned: category.earned || 0,
     required: category.required || 0,
     unit: "學分",
@@ -79,13 +81,14 @@ const SaturnDeco = ({ style }) => (
 
 // --- Sub Components ---
 
-const CenterSun = ({ data }) => {
+const CenterSun = ({ data, sunSize }) => {
   const [pct, setPct] = useState(0);
+
   const totalPct =
     data.totalRequired > 0
       ? Math.round((data.totalEarned / data.totalRequired) * 100)
       : 0;
-  const radius = 94;
+  const radius = Math.round(sunSize * 0.48);
   const circumference = 2 * Math.PI * radius;
 
   useEffect(() => {
@@ -94,8 +97,8 @@ const CenterSun = ({ data }) => {
   }, [totalPct]);
 
   const sunStyle = {
-    width: "195px",
-    height: "195px",
+    width: `${sunSize}px`,
+    height: `${sunSize}px`,
     borderRadius: "50%",
     background:
       "radial-gradient(circle at 36% 32%, #FFDE96 0%, #FA855A 52%, #C93638 100%)",
@@ -116,6 +119,8 @@ const CenterSun = ({ data }) => {
     userSelect: "none",
   };
 
+  const center = Math.round(sunSize / 2);
+
   const sheenStyle = {
     position: "absolute",
     top: "12%",
@@ -132,22 +137,22 @@ const CenterSun = ({ data }) => {
     <div style={sunStyle}>
       <div style={sheenStyle} />
       <svg
-        width="195"
-        height="195"
-        viewBox="0 0 195 195"
+        width={sunSize}
+        height={sunSize}
+        viewBox={`0 0 ${sunSize} ${sunSize}`}
         style={{ position: "absolute", transform: "rotate(-90deg)" }}
       >
         <circle
-          cx="97.5"
-          cy="97.5"
+          cx={center}
+          cy={center}
           r={radius}
           fill="none"
           stroke="rgba(255,255,255,0.2)"
           strokeWidth="6"
         />
         <circle
-          cx="97.5"
-          cy="97.5"
+          cx={center}
+          cy={center}
           r={radius}
           fill="none"
           stroke="rgba(255,255,255,0.82)"
@@ -205,13 +210,31 @@ const CenterSun = ({ data }) => {
   );
 };
 
-const OrbitSystem = ({ data, onDetail }) => {
-  const RX = 370;
-  const RY = 185;
+const OrbitSystem = ({ data, onDetail, onSelect }) => {
+  const [windowSize, setWindowSize] = useState({
+    width: typeof window !== "undefined" ? window.innerWidth : 1280,
+    height: typeof window !== "undefined" ? window.innerHeight : 720,
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const RX = Math.round(Math.min(windowSize.width * 0.24, 720));
+  const RY = Math.round(Math.min(windowSize.height * 0.3, 380));
+  const sunSize = Math.round(
+    Math.max(220, Math.min(380, Math.min(RX, RY) * 1.1)),
+  );
 
   const [angles, setAngles] = useState([90, 0, 270, 180]);
   const anglesRef = useRef([90, 0, 270, 180]);
   const snappingRef = useRef(false);
+  const [selectedHint, setSelectedHint] = useState(null);
 
   const snapToFront = (idx) => {
     if (snappingRef.current) return;
@@ -254,14 +277,13 @@ const OrbitSystem = ({ data, onDetail }) => {
         const y = RY * Math.sin(rad);
         const depth = Math.sin(rad);
         const t = (depth + 1) / 2;
-        const PMIN = 125;
-        const PMAX = 145;
-        const size = Math.round(PMIN + (PMAX - PMIN) * t);
-
+        const minPlanet = Math.round(Math.max(120, RY * 0.24));
+        const maxPlanet = Math.round(Math.max(150, RY * 0.33));
+        const size = Math.round(minPlanet + (maxPlanet - minPlanet) * t);
         return { cat, x, y, depth, size, angle };
       })
       .sort((a, b) => a.depth - b.depth);
-  }, [angles, data.categories]);
+  }, [angles, data.categories, RY]);
 
   return (
     <div
@@ -289,14 +311,18 @@ const OrbitSystem = ({ data, onDetail }) => {
         <svg
           style={{
             position: "absolute",
-            left: "-600px",
-            top: "-600px",
-            width: "1200px",
-            height: "1200px",
+            left: `-${Math.round(Math.max(RX, RY) * 1.2)}px`,
+            top: `-${Math.round(Math.max(RX, RY) * 1.2)}px`,
+            width: `${Math.round(Math.max(RX, RY) * 2.4)}px`,
+            height: `${Math.round(Math.max(RX, RY) * 2.4)}px`,
             pointerEvents: "none",
             overflow: "visible",
           }}
-          viewBox="-600 -600 1200 1200"
+          viewBox={`-${Math.round(Math.max(RX, RY) * 1.2)} -${Math.round(
+            Math.max(RX, RY) * 1.2,
+          )} ${Math.round(Math.max(RX, RY) * 2.4)} ${Math.round(
+            Math.max(RX, RY) * 2.4,
+          )}`}
         >
           <g stroke="#C4A830" fill="none">
             {[
@@ -358,7 +384,7 @@ const OrbitSystem = ({ data, onDetail }) => {
         </svg>
       </div>
 
-      <CenterSun data={data} />
+      <CenterSun data={data} sunSize={sunSize} />
 
       {planets.map((p, i) => (
         <div
@@ -377,15 +403,23 @@ const OrbitSystem = ({ data, onDetail }) => {
             cat={p.cat}
             size={p.size}
             depth={p.depth}
-            onClick={() =>
-              snapToFront(data.categories.findIndex((c) => c.id === p.cat.id))
-            }
+            onClick={() => {
+              snapToFront(data.categories.findIndex((c) => c.id === p.cat.id));
+              setSelectedHint({ cat: p.cat, x: p.x, y: p.y, size: p.size });
+            }}
             onDetailClick={(id) =>
               onDetail(data.categories.find((cat) => cat.id === id))
             }
           />
         </div>
       ))}
+
+      {selectedHint && selectedHint.cat?.hint && (
+        <HintBox
+          selectedHint={selectedHint}
+          onClose={() => setSelectedHint(null)}
+        />
+      )}
     </div>
   );
 };
@@ -409,14 +443,8 @@ const Dashboard = ({ onDetail, token }) => {
         }
 
         const mappedCategories = summary.categories.map(mapBackendCategory);
-        const totalEarned = mappedCategories.reduce(
-          (sum, cat) => sum + cat.earned,
-          0,
-        );
-        const totalRequired = mappedCategories.reduce(
-          (sum, cat) => sum + cat.required,
-          0,
-        );
+        const totalEarned = summary.total_credits.earned;
+        const totalRequired = summary.total_credits.required;
         const now = new Date();
 
         setDashboard({
@@ -595,9 +623,10 @@ const Dashboard = ({ onDetail, token }) => {
           justifyContent: "space-between",
           alignItems: "flex-start",
           zIndex: 10,
+          pointerEvents: "none",
         }}
       >
-        <div>
+        <div style={{ pointerEvents: "none" }}>
           <div
             style={{
               fontSize: "12px",
@@ -615,6 +644,7 @@ const Dashboard = ({ onDetail, token }) => {
               alignItems: "center",
               gap: "12px",
               marginTop: "4px",
+              marginBottom: "16px",
             }}
           >
             <h1
@@ -640,8 +670,67 @@ const Dashboard = ({ onDetail, token }) => {
               {data.catalogYear}
             </div>
           </div>
+          {data.studentInfo && (
+            <div
+              style={{
+                display: "flex",
+                gap: "24px",
+                fontSize: "14px",
+                color: "#5A4600",
+              }}
+            >
+              {data.studentInfo.student_id && (
+                <div>
+                  <span style={{ fontWeight: 500, color: "#8B7030" }}>
+                    學號：
+                  </span>
+                  <span>{data.studentInfo.student_id}</span>
+                </div>
+              )}
+              {data.studentInfo.name && (
+                <div>
+                  <span style={{ fontWeight: 500, color: "#8B7030" }}>
+                    姓名：
+                  </span>
+                  <span>{data.studentInfo.name}</span>
+                </div>
+              )}
+              {data.studentInfo.major1 && (
+                <div>
+                  <span style={{ fontWeight: 500, color: "#8B7030" }}>
+                    主修：
+                  </span>
+                  <span>{data.studentInfo.major1}</span>
+                </div>
+              )}
+              {data.studentInfo.major2 && (
+                <div>
+                  <span style={{ fontWeight: 500, color: "#8B7030" }}>
+                    雙主修：
+                  </span>
+                  <span>{data.studentInfo.major2}</span>
+                </div>
+              )}
+              {data.studentInfo.auxiliary1 && (
+                <div>
+                  <span style={{ fontWeight: 500, color: "#8B7030" }}>
+                    輔系：
+                  </span>
+                  <span>{data.studentInfo.auxiliary1}</span>
+                </div>
+              )}
+              {data.studentInfo.auxiliary2 && (
+                <div>
+                  <span style={{ fontWeight: 500, color: "#8B7030" }}>
+                    輔系：
+                  </span>
+                  <span>{data.studentInfo.auxiliary2}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        <div style={{ display: "flex", gap: "12px" }}>
+        <div style={{ display: "flex", gap: "12px", pointerEvents: "auto" }}>
           <button
             style={{
               background: "#FFDE96",

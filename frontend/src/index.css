@@ -5,8 +5,13 @@
 body {
   margin: 0;
   padding: 0;
-  background: #F6FFEA;
-  font-family: 'Noto Sans TC', 'PingFang TC', system-ui, -apple-system, sans-serif;
+  background: #f6ffea;
+  font-family:
+    "Noto Sans TC",
+    "PingFang TC",
+    system-ui,
+    -apple-system,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -22,4 +27,15 @@ button {
 
 table {
   border-collapse: collapse;
+}
+
+@keyframes hintFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
