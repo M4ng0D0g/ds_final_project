@@ -426,7 +426,7 @@ const OrbitSystem = ({ data, onDetail, onSelect }) => {
 
 // --- Main Dashboard Component ---
 
-const Dashboard = ({ onDetail, token }) => {
+const Dashboard = ({ onDetail, onLogout, token }) => {
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -492,35 +492,79 @@ const Dashboard = ({ onDetail, token }) => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0B021A",
-          color: "#fff",
+          background: "linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)",
           padding: "24px",
+          fontFamily:
+            "'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
         }}
       >
-        <div style={{ maxWidth: "520px", textAlign: "center" }}>
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "520px",
+            padding: "40px",
+            borderRadius: "16px",
+            background: "#ffffff",
+            boxShadow: "0 12px 30px rgba(0, 0, 0, 0.08)",
+            textAlign: "center",
+          }}
+        >
           <p
             style={{
               marginBottom: "16px",
-              fontSize: "20px",
+              fontSize: "24px",
               fontWeight: "900",
+              color: "#1a1a1a",
             }}
           >
-            讀取儀表板失敗
+            登入已過期
           </p>
-          <p style={{ marginBottom: "24px" }}>{error}</p>
-          <button
-            onClick={() => window.location.reload()}
+          <p
             style={{
-              padding: "10px 20px",
+              marginBottom: "24px",
+              fontSize: "15px",
+              color: "#4d5868",
+              lineHeight: 1.7,
+            }}
+          >
+            您的登入憑證已失效，請重新登入以繼續使用畢業學分儀表板。
+          </p>
+          <p
+            style={{
+              marginBottom: "24px",
+              fontSize: "14px",
+              color: "#6b7280",
+            }}
+          >
+            {error}
+          </p>
+          <button
+            onClick={onLogout}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "14px 24px",
               borderRadius: "12px",
               border: "none",
-              background: "#FFAD00",
-              color: "#0B021A",
-              fontWeight: "800",
+              background: "#4a90e2",
+              color: "#fff",
+              fontWeight: "700",
+              fontSize: "15px",
               cursor: "pointer",
+              boxShadow: "0 12px 24px rgba(74, 144, 226, 0.24)",
+              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = "translateY(-1px)";
+              e.target.style.boxShadow = "0 16px 28px rgba(74, 144, 226, 0.28)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = "translateY(0)";
+              e.target.style.boxShadow = "0 12px 24px rgba(74, 144, 226, 0.24)";
             }}
           >
-            重新載入
+            重新登入
           </button>
         </div>
       </div>
@@ -743,6 +787,20 @@ const Dashboard = ({ onDetail, token }) => {
             }}
           >
             Contact
+          </button>
+          <button
+            onClick={onLogout}
+            style={{
+              background: "#ffffff",
+              border: "2px solid #C8A840",
+              borderRadius: "10px",
+              padding: "8px 16px",
+              fontWeight: 800,
+              color: "#3A3A3A",
+              cursor: "pointer",
+            }}
+          >
+            登出
           </button>
           <button
             style={{
