@@ -124,6 +124,13 @@ const DetailView = ({ category, onBack, token }) => {
     boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
   };
 
+  const semesterKeys = [...new Set(records.map((record) => record.sem))];
+  const groupedRecords = records.reduce((groups, record) => {
+    if (!groups[record.sem]) groups[record.sem] = [];
+    groups[record.sem].push(record);
+    return groups;
+  }, {});
+
   return (
     <div
       style={{
@@ -315,130 +322,145 @@ const DetailView = ({ category, onBack, token }) => {
             >
               {error}
             </div>
-          ) : (
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                textAlign: "left",
-              }}
+          ) : semesterKeys.length === 0 ? (
+            <div
+              style={{ padding: "24px", textAlign: "center", color: "#8B7030" }}
             >
-              <thead style={{ background: "#FBF5DC" }}>
-                <tr>
-                  {["學期", "課程名稱", "類別", "學分", "成績", "狀態"].map(
-                    (h) => (
-                      <th
-                        key={h}
+              尚未有任何修課紀錄。
+            </div>
+          ) : (
+            semesterKeys.map((sem) => (
+              <div
+                key={sem}
+                style={{ padding: "24px", borderBottom: "1px solid #F3E1A0" }}
+              >
+                <div
+                  style={{
+                    marginBottom: "16px",
+                    fontSize: "16px",
+                    fontWeight: 800,
+                    color: "#5A4A0A",
+                  }}
+                >
+                  學期：{sem}
+                </div>
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    textAlign: "left",
+                  }}
+                >
+                  <thead style={{ background: "#FBF5DC" }}>
+                    <tr>
+                      {["課程名稱", "類別", "學分", "成績", "狀態"].map((h) => (
+                        <th
+                          key={h}
+                          style={{
+                            width: "20%",
+                            padding: "16px",
+                            fontSize: "13px",
+                            fontWeight: 800,
+                            color: "#8B7030",
+                          }}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groupedRecords[sem].map((r, i) => (
+                      <tr
+                        key={`${sem}-${i}`}
                         style={{
-                          padding: "16px",
-                          fontSize: "13px",
-                          fontWeight: 800,
-                          color: "#8B7030",
+                          borderBottom: "1px solid #EDD880",
+                          background: r.ok ? "#fff" : "#FFF5F0",
+                          transition: "background 0.2s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = r.ok
+                            ? "#FDFBF0"
+                            : "#FFE8E0";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = r.ok
+                            ? "#fff"
+                            : "#FFF5F0";
                         }}
                       >
-                        {h}
-                      </th>
-                    ),
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {(records.length > 0 ? records : []).map((r, i) => (
-                  <tr
-                    key={i}
-                    style={{
-                      borderBottom: "1px solid #EDD880",
-                      background: r.ok ? "#fff" : "#FFF5F0",
-                      transition: "background 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = r.ok
-                        ? "#FDFBF0"
-                        : "#FFE8E0";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = r.ok
-                        ? "#fff"
-                        : "#FFF5F0";
-                    }}
-                  >
-                    <td
-                      style={{
-                        padding: "16px",
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        color: "#3A2000",
-                      }}
-                    >
-                      {r.sem}
-                    </td>
-                    <td
-                      style={{
-                        padding: "16px",
-                        fontSize: "15px",
-                        fontWeight: 800,
-                        color: "#3A2000",
-                      }}
-                    >
-                      {r.name}
-                    </td>
-                    <td style={{ padding: "16px" }}>
-                      <span
-                        style={{
-                          background: "#FBF2D0",
-                          border: "1px solid #E8D070",
-                          borderRadius: "6px",
-                          padding: "2px 8px",
-                          fontSize: "12px",
-                          fontWeight: 800,
-                          color: "#8B7030",
-                        }}
-                      >
-                        {r.type}
-                      </span>
-                    </td>
-                    <td
-                      style={{
-                        padding: "16px",
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        color: "#3A2000",
-                      }}
-                    >
-                      {r.credit}
-                    </td>
-                    <td
-                      style={{
-                        padding: "16px",
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        color: "#3A2000",
-                      }}
-                    >
-                      {r.score}
-                    </td>
-                    <td style={{ padding: "16px" }}>
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                          padding: "4px 10px",
-                          borderRadius: "8px",
-                          fontSize: "12px",
-                          fontWeight: 800,
-                          background: r.ok ? "#E8FAF0" : "#FFF0EE",
-                          border: `1.5px solid ${r.ok ? "#80DDA8" : "#F0A0A0"}`,
-                          color: r.ok ? "#1A7A4A" : "#C03030",
-                        }}
-                      >
-                        {r.ok ? "通過" : "缺修"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        <td
+                          style={{
+                            width: "20%",
+                            padding: "16px",
+                            fontSize: "15px",
+                            fontWeight: 800,
+                            color: "#3A2000",
+                          }}
+                        >
+                          {r.name}
+                        </td>
+                        <td style={{ width: "20%", padding: "16px" }}>
+                          <span
+                            style={{
+                              background: "#FBF2D0",
+                              border: "1px solid #E8D070",
+                              borderRadius: "6px",
+                              padding: "2px 8px",
+                              fontSize: "12px",
+                              fontWeight: 800,
+                              color: "#8B7030",
+                            }}
+                          >
+                            {r.type}
+                          </span>
+                        </td>
+                        <td
+                          style={{
+                            width: "20%",
+                            padding: "16px",
+                            fontSize: "14px",
+                            fontWeight: 700,
+                            color: "#3A2000",
+                          }}
+                        >
+                          {r.credit}
+                        </td>
+                        <td
+                          style={{
+                            width: "20%",
+                            padding: "16px",
+                            fontSize: "14px",
+                            fontWeight: 700,
+                            color: "#3A2000",
+                          }}
+                        >
+                          {r.score}
+                        </td>
+                        <td style={{ width: "20%", padding: "16px" }}>
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "4px 10px",
+                              borderRadius: "8px",
+                              fontSize: "12px",
+                              fontWeight: 800,
+                              background: r.ok ? "#E8FAF0" : "#FFF0EE",
+                              border: `1.5px solid ${r.ok ? "#80DDA8" : "#F0A0A0"}`,
+                              color: r.ok ? "#1A7A4A" : "#C03030",
+                            }}
+                          >
+                            {r.ok ? "通過" : "缺修"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))
           )}
         </section>
       </main>
