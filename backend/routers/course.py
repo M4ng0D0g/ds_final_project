@@ -18,8 +18,8 @@ class CourseSearchRequest(BaseModel):
     teacher: Optional[str] = Field(None, description="授課教師姓名，支援模糊查詢")
     course_type: Optional[str] = Field(None, description="課程類型")
     department: Optional[str] = Field(None, description="開課單位，支援id查詢或名稱模糊查詢")
-    page: Optional[int] = Field(1)
-    size: Optional[int] = Field(20)
+    page: Optional[int] = Field(1, ge=1)
+    size: Optional[int] = Field(20, ge=1, le=500)
 
 @router.post(
     "/search",
@@ -47,9 +47,7 @@ async def search_courses(payload: CourseSearchRequest, db: AsyncSession = Depend
         stmt = stmt.join(Department).where((CourseInformation.department_id == payload.department) | (Department.department_name.ilike(f"%{payload.department}%")))
 
     # 3. 處理分頁限制 (Pagination)
-    payload.size = min(payload.size, 500)
-    offset_value = (payload.page - 1) * payload.size
-    stmt = stmt.offset(offset_value).limit(payload.size)
+    stmt = stmt.offset((payload.page - 1) * payload.size).limit(payload.size)
     
     # 4. 執行並回傳
     result = await db.execute(stmt)

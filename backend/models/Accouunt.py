@@ -15,9 +15,9 @@ class StudentAccount(Base):
         ForeignKey("department.department_id"),
         nullable=False,
     )
-    department_major2: Mapped[Optional[int]] = mapped_column(String(3), ForeignKey("department.department_id"))
-    department_auxiliary1: Mapped[Optional[int]] = mapped_column(String(3), ForeignKey("department.department_id"))
-    department_auxiliary2: Mapped[Optional[int]] = mapped_column(String(3), ForeignKey("department.department_id"))
+    department_major2: Mapped[Optional[str]] = mapped_column(String(3), ForeignKey("department.department_id"), nullable=True)
+    department_auxiliary1: Mapped[Optional[str]] = mapped_column(String(3), ForeignKey("department.department_id"), nullable=True)
+    department_auxiliary2: Mapped[Optional[str]] = mapped_column(String(3), ForeignKey("department.department_id"), nullable=True)
     
     __table_args__ = (
         CheckConstraint(

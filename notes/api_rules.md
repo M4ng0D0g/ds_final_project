@@ -6,5 +6,7 @@
 [category](./util/category.json)
 教師端主頁API
 [teacher](./util/teacher.json)
-註冊系統API
-[register](./util/register.json)
+註冊系統學生API
+[register](./util/register_student.json)
+註冊系統老師API
+[register](./util/register_teacher.json)

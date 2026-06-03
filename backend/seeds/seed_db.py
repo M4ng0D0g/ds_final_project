@@ -75,6 +75,7 @@ async def seed_data(file_name: str) -> None:
 
 async def main():
     await seed_data("department.csv")
+    await seed_data("teacher_account.csv")
     await seed_data("course_information.csv")
     await seed_data("student_account.csv")
     await seed_data("course_record.csv")

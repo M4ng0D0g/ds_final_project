@@ -8,10 +8,10 @@
     },
     "body": {
       "id": "string (required) - 使用者帳號 (通常為學號或教職員工號)",
+      "department_id": "string (required) - 所屬系所代碼，例如 '703' 代表資訊工程學系",
       "password": "string (required) - 密碼",
       "password_confirm": "string (required) - 確認密碼，必須與 password 欄位一致",
-      "name": "string (required) - 使用者真實姓名",
-      "email": "string (required) - 聯絡信箱，用於忘記密碼與系統通知"
+      "name": "string (required) - 使用者真實姓名"
     }
   },
   "responses": {
@@ -23,14 +23,13 @@
           "user": {
             "id": "113703000",
             "name": "michael_c",
-            "role": "student",
-            "email": "michael_c@example.edu.tw",
+            "role": "teacher",
             "department_id": "703"
           }
         }
       }
     },
-    "400_bad_request": {
+    "400_Bad request": {
       "description": "請求格式錯誤、缺少必要欄位，或密碼不一致",
       "body": {
         "status": "error",
@@ -41,7 +40,7 @@
       }
     },
     "409_conflict": {
-      "description": "帳號 (id) 或信箱 (email) 已經被註冊",
+      "description": "帳號 (id) 已經被註冊",
       "body": {
         "status": "error",
         "error": {
