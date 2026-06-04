@@ -6,6 +6,7 @@ import Login from "./views/Login";
 function App() {
   const [detail, setDetail] = useState(null);
   const [token, setToken] = useState(null);
+  const [planetAngles, setPlanetAngles] = useState([90, 0, 270, 180]);
 
   useEffect(() => {
     const t = localStorage.getItem("token");
@@ -50,7 +51,13 @@ function App() {
           token={token}
         />
       ) : (
-        <Dashboard onDetail={setDetail} onLogout={handleLogout} token={token} />
+        <Dashboard
+          onDetail={setDetail}
+          onLogout={handleLogout}
+          token={token}
+          planetAngles={planetAngles}
+          setPlanetAngles={setPlanetAngles}
+        />
       )}
     </div>
   );

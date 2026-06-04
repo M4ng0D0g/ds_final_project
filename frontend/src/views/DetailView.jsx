@@ -84,14 +84,24 @@ const DetailView = ({ category, onBack, token }) => {
         const result = await getCategoryData(token, category.id);
         const courses = result?.data?.courses || [];
         setRecords(
-          courses.map((course) => ({
-            sem: course.semester,
-            name: course.course_name,
-            type: course.course_type,
-            credit: course.credits,
-            score: course.grade || (course.status === "passed" ? "P" : "F"),
-            ok: course.status === "passed",
-          })),
+          courses.map((course) => {
+            const status =
+              course.status === "passed"
+                ? "passed"
+                : course.status === "failed"
+                  ? "failed"
+                  : "unknown";
+            return {
+              sem: course.semester,
+              name: course.course_name,
+              type: course.course_type,
+              credit: course.credits,
+              score:
+                course.grade ||
+                (status === "passed" ? "P" : status === "failed" ? "F" : "?"),
+              status,
+            };
+          }),
         );
       } catch (err) {
         setError(err.message || "無法取得課程明細");
@@ -124,12 +134,29 @@ const DetailView = ({ category, onBack, token }) => {
     boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
   };
 
-  const semesterKeys = [...new Set(records.map((record) => record.sem))];
   const groupedRecords = records.reduce((groups, record) => {
     if (!groups[record.sem]) groups[record.sem] = [];
     groups[record.sem].push(record);
     return groups;
   }, {});
+
+  const semesterKeys = (() => {
+    const keys = Array.from(new Set(records.map((r) => r.sem).filter(Boolean)));
+    const parseSem = (s) => {
+      if (!s) return { year: 0, rest: "" };
+      const m = s.match(/(\d{4})/);
+      const year = m ? parseInt(m[1], 10) : 0;
+      const rest = s.replace(/.*\d{4}\s*-?\s*/g, "").trim();
+      return { year, rest, raw: s };
+    };
+    keys.sort((a, b) => {
+      const pa = parseSem(a);
+      const pb = parseSem(b);
+      if (pa.year !== pb.year) return pa.year - pb.year;
+      return pa.rest.localeCompare(pb.rest);
+    });
+    return keys;
+  })();
 
   return (
     <div
@@ -375,18 +402,29 @@ const DetailView = ({ category, onBack, token }) => {
                         key={`${sem}-${i}`}
                         style={{
                           borderBottom: "1px solid #EDD880",
-                          background: r.ok ? "#fff" : "#FFF5F0",
+                          background:
+                            r.status === "failed"
+                              ? "#FFF0EE"
+                              : r.status === "unknown"
+                                ? "#FFF8D9"
+                                : "#fff",
                           transition: "background 0.2s ease",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = r.ok
-                            ? "#FDFBF0"
-                            : "#FFE8E0";
+                          e.currentTarget.style.background =
+                            r.status === "failed"
+                              ? "#FFE8E0"
+                              : r.status === "unknown"
+                                ? "#FFF6B3"
+                                : "#FDFBF0";
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = r.ok
-                            ? "#fff"
-                            : "#FFF5F0";
+                          e.currentTarget.style.background =
+                            r.status === "failed"
+                              ? "#FFF0EE"
+                              : r.status === "unknown"
+                                ? "#FFF8D9"
+                                : "#fff";
                         }}
                       >
                         <td
@@ -447,12 +485,32 @@ const DetailView = ({ category, onBack, token }) => {
                               borderRadius: "8px",
                               fontSize: "12px",
                               fontWeight: 800,
-                              background: r.ok ? "#E8FAF0" : "#FFF0EE",
-                              border: `1.5px solid ${r.ok ? "#80DDA8" : "#F0A0A0"}`,
-                              color: r.ok ? "#1A7A4A" : "#C03030",
+                              background:
+                                r.status === "passed"
+                                  ? "#E8FAF0"
+                                  : r.status === "failed"
+                                    ? "#FFF0EE"
+                                    : "#FFF8D9",
+                              border: `1.5px solid ${
+                                r.status === "passed"
+                                  ? "#80DDA8"
+                                  : r.status === "failed"
+                                    ? "#F0A0A0"
+                                    : "#F1C94C"
+                              }`,
+                              color:
+                                r.status === "passed"
+                                  ? "#1A7A4A"
+                                  : r.status === "failed"
+                                    ? "#C03030"
+                                    : "#A26C00",
                             }}
                           >
-                            {r.ok ? "通過" : "缺修"}
+                            {r.status === "passed"
+                              ? "通過"
+                              : r.status === "failed"
+                                ? "缺修"
+                                : "未知"}
                           </span>
                         </td>
                       </tr>
