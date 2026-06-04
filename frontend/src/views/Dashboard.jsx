@@ -30,6 +30,13 @@ const mapBackendCategory = (category, index) => {
   };
 };
 
+const createPlanetAngles = (count) => {
+  if (count <= 0) return [];
+  return Array.from({ length: count }, (_, index) =>
+    Math.round(((360 / count) * index + 90) % 360),
+  );
+};
+
 // --- Decorative Components ---
 
 const Star4 = ({ size, color, style }) => (
@@ -231,14 +238,20 @@ const OrbitSystem = ({ data, onDetail, onSelect, angles, setAngles }) => {
     Math.max(220, Math.min(380, Math.min(RX, RY) * 1.1)),
   );
 
-  const initialAngles = angles || [90, 0, 270, 180];
+  const initialAngles =
+    angles && angles.length === data.categories.length
+      ? angles
+      : createPlanetAngles(data.categories.length);
   const anglesRef = useRef(initialAngles);
   const snappingRef = useRef(false);
   const [selectedHint, setSelectedHint] = useState(null);
 
   useEffect(() => {
     anglesRef.current = initialAngles;
-  }, [initialAngles]);
+    if (setAngles && (!angles || angles.length !== data.categories.length)) {
+      setAngles(initialAngles);
+    }
+  }, [initialAngles, angles, data.categories.length, setAngles]);
 
   const snapToFront = (idx) => {
     if (snappingRef.current) return;
@@ -465,6 +478,16 @@ const Dashboard = ({
           lastUpdated: now.toLocaleDateString("zh-TW"),
           catalogYear: now.getFullYear(),
         });
+
+        if (typeof setPlanetAngles === "function") {
+          const nextAngles = createPlanetAngles(mappedCategories.length);
+          if (
+            !planetAngles ||
+            planetAngles.length !== mappedCategories.length
+          ) {
+            setPlanetAngles(nextAngles);
+          }
+        }
       } catch (err) {
         setError(err.message || "無法取得儀表板資料");
       } finally {

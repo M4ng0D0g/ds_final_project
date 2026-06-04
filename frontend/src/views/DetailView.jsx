@@ -98,7 +98,7 @@ const DetailView = ({ category, onBack, token }) => {
               credit: course.credits,
               score:
                 course.grade ||
-                (status === "passed" ? "P" : status === "failed" ? "F" : "?"),
+                (status === "passed" ? "P" : status === "failed" ? "F" : "-"),
               status,
             };
           }),
@@ -509,8 +509,8 @@ const DetailView = ({ category, onBack, token }) => {
                             {r.status === "passed"
                               ? "通過"
                               : r.status === "failed"
-                                ? "缺修"
-                                : "未知"}
+                                ? "未通過"
+                                : "進行中"}
                           </span>
                         </td>
                       </tr>
