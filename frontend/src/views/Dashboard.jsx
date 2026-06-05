@@ -30,6 +30,13 @@ const mapBackendCategory = (category, index) => {
   };
 };
 
+const createPlanetAngles = (count) => {
+  if (count <= 0) return [];
+  return Array.from({ length: count }, (_, index) =>
+    Math.round(((360 / count) * index + 90) % 360),
+  );
+};
+
 // --- Decorative Components ---
 
 const Star4 = ({ size, color, style }) => (
@@ -210,7 +217,7 @@ const CenterSun = ({ data, sunSize }) => {
   );
 };
 
-const OrbitSystem = ({ data, onDetail, onSelect }) => {
+const OrbitSystem = ({ data, onDetail, onSelect, angles, setAngles }) => {
   const [windowSize, setWindowSize] = useState({
     width: typeof window !== "undefined" ? window.innerWidth : 1280,
     height: typeof window !== "undefined" ? window.innerHeight : 720,
@@ -231,10 +238,20 @@ const OrbitSystem = ({ data, onDetail, onSelect }) => {
     Math.max(220, Math.min(380, Math.min(RX, RY) * 1.1)),
   );
 
-  const [angles, setAngles] = useState([90, 0, 270, 180]);
-  const anglesRef = useRef([90, 0, 270, 180]);
+  const initialAngles =
+    angles && angles.length === data.categories.length
+      ? angles
+      : createPlanetAngles(data.categories.length);
+  const anglesRef = useRef(initialAngles);
   const snappingRef = useRef(false);
   const [selectedHint, setSelectedHint] = useState(null);
+
+  useEffect(() => {
+    anglesRef.current = initialAngles;
+    if (setAngles && (!angles || angles.length !== data.categories.length)) {
+      setAngles(initialAngles);
+    }
+  }, [initialAngles, angles, data.categories.length, setAngles]);
 
   const snapToFront = (idx) => {
     if (snappingRef.current) return;
@@ -426,7 +443,13 @@ const OrbitSystem = ({ data, onDetail, onSelect }) => {
 
 // --- Main Dashboard Component ---
 
-const Dashboard = ({ onDetail, onLogout, token }) => {
+const Dashboard = ({
+  onDetail,
+  onLogout,
+  token,
+  planetAngles,
+  setPlanetAngles,
+}) => {
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -455,6 +478,16 @@ const Dashboard = ({ onDetail, onLogout, token }) => {
           lastUpdated: now.toLocaleDateString("zh-TW"),
           catalogYear: now.getFullYear(),
         });
+
+        if (typeof setPlanetAngles === "function") {
+          const nextAngles = createPlanetAngles(mappedCategories.length);
+          if (
+            !planetAngles ||
+            planetAngles.length !== mappedCategories.length
+          ) {
+            setPlanetAngles(nextAngles);
+          }
+        }
       } catch (err) {
         setError(err.message || "無法取得儀表板資料");
       } finally {
@@ -851,7 +884,12 @@ const Dashboard = ({ onDetail, onLogout, token }) => {
           transform: "translateY(-60px)",
         }}
       >
-        <OrbitSystem data={data} onDetail={onDetail} />
+        <OrbitSystem
+          data={data}
+          onDetail={onDetail}
+          angles={planetAngles}
+          setAngles={setPlanetAngles}
+        />
       </div>
 
       {/* Footer */}
