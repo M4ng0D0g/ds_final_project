@@ -5,6 +5,7 @@ from database import get_db
 from pydantic import BaseModel, Field
 from typing import Optional
 from utils.exceptions import APIFailException
+from utils.jsend_schemas import JSendSuccessResponse
 from .authorization import get_user
 from .graduation import check_department_rule
 
