@@ -9,8 +9,6 @@
     "body": {
       "enrollment_year": "string (optional) - 入學年度，例如: '113'",
       "department_id": "string (optional) - 科系代碼，例如: '703'",
-      "category_id": "string (optional) - 學分類型篩選，例如: 'general_edu' (只列出該類別的進度)",
-      "is_pass": "boolean (optional) - 篩選是否達標，例如: true (已達標), false (未達標)",
       "page": "integer (optional) - 頁碼，預設為 1",
       "limit": "integer (optional) - 每頁筆數，預設為 20"
     }
@@ -33,13 +31,65 @@
               "name": "Yoga",
               "major1": "資訊科學系",
               "major2": null,
-              "auxiliary": null,
+              "auxiliary1": null,
+              "auxiliary2": null,
               "is_pass": true
             },
             "total_credits": {
               "earned": 129,
               "required": 128
-            }
+            },
+            "categories": [
+              {
+                "id": "major1",
+                "name": "主修",
+                "earned": 65,
+                "required": 65,
+                "hint": "尚缺xx 課程"
+              },
+              {
+                "id": "out_department",
+                "name": "外系選修",
+                "earned": 26,
+                "required": 28,
+                "hint": "尚缺xx 課程"
+              },
+              {
+                "id": "general_edu",
+                "name": "通識課程",
+                "earned": 26,
+                "required": 28,
+                "hint": "尚缺xx 課程"
+              },
+              {
+                "id": "common_compulsory",
+                "name": "共同必修",
+                "earned": 12,
+                "required": 7,
+                "hint": "已超出必修學分，建議選修其他類別課程"
+              },
+              {
+                "id": "major2",
+                "name": "雙主修",
+                "earned": 65,
+                "required": 65,
+                "hint": "尚缺xx 課程"
+              },
+              {
+                "id": "auxiliary1",
+                "name": "輔系",
+                "earned": 65,
+                "required": 65,
+                "hint": "尚缺xx 課程"
+              },
+              {
+                "id": "auxiliary2",
+                "name": "輔系",
+                "earned": 65,
+                "required": 65,
+                "hint": "尚缺xx 課程"
+              }
+            ]
           }
         ]
       }

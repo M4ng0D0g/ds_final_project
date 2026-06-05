@@ -6,8 +6,10 @@ from pydantic import BaseModel
 import uuid
 from datetime import datetime, timedelta, timezone
 from models.Accouunt import StudentAccount, TeacherAccount
+from models.Department import Department
 from utils.jsend_schemas import JSendSuccessResponse
 from utils.exceptions import APIFailException
+
 router = APIRouter(
     tags=["Authorization"]
 )
@@ -66,13 +68,14 @@ async def register_student(payload: StudentRegisterPayload, db: AsyncSession = D
 
         # 學生：自動從學號 (假設前 9 碼) 擷取系所代碼，長度不足則給預設值 "703"
         dept_id = payload.id[3:6] if len(payload.id) >= 6 else "703"
-        
+
         new_user = StudentAccount(
             student_id=payload.id,
             password=payload.password,
             user_name=payload.name,
             department_major1=dept_id
         )
+
 
         db.add(new_user)
         await db.commit()
@@ -229,7 +232,8 @@ async def account_verify(payload: LoginPayload, db: AsyncSession = Depends(get_d
                 "expires_at": expire_time
             }
             return {
-                "data":{
+
+                "data": {
                     "token": user_token,
                     "user": {
                         "id": user.teacher_id,
