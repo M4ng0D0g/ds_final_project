@@ -155,9 +155,7 @@ async def get_summary(user: dict = Depends(get_user), db: AsyncSession = Depends
         .where(
             CourseRecord.student_id == student.student_id,
             CourseRecord.status == "passed",
-            CourseInformation.course_type.in_(
-                ["GC", "GF", "CGH", "CGS", "CGN", "GH", "GS", "GN", "GI", "RPE"]
-            ),
+            CourseInformation.course_type.ilike("%G%") | CourseInformation.course_type == "RPE"
         )
     )
 

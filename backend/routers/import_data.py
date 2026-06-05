@@ -8,7 +8,7 @@ from models.Course import CourseInformation, CourseRecord
 from models.Department import Department, GraduationRequirements, RequirementRule, RequirementCourseMapping
 from utils.jsend_schemas import JSendSuccessResponse
 from utils.exceptions import  APIFailException
-
+from .authorization import get_user
 router = APIRouter(
     tags=["Import data"]
 )
@@ -17,8 +17,14 @@ router = APIRouter(
     "/student_data",
     response_model=JSendSuccessResponse[dict]
 )
-async def import_student_data(file: UploadFile, db: AsyncSession = Depends(get_db)):
+async def import_student_data(file: UploadFile, user: dict = Depends(get_user), db: AsyncSession = Depends(get_db)):
     """導入全人系統課業學習資料"""
+    if user["role"] != "student":
+        raise APIFailException(
+            code="Bad request",
+            message="使用者身份不是學生"
+        )
+    
     if not file.filename.endswith('.json'):
         raise APIFailException(
             code="Bad Request",
@@ -34,11 +40,11 @@ async def import_student_data(file: UploadFile, db: AsyncSession = Depends(get_d
             code="Bad Request",
             message="json檔案不合法"
         )
+        
     for dict in data:
         if "課業學習" in dict.keys():
             student_data = dict["課業學習"]
     if not student_data:
-        print(e)
         raise APIFailException(
             code="Bad Request",
             message="json檔中沒有課業學習選項"
@@ -48,18 +54,8 @@ async def import_student_data(file: UploadFile, db: AsyncSession = Depends(get_d
     course_information = set(result.scalars())
     
     course_records = 0
-    try:
-        result = await db.execute(select(StudentAccount).where(StudentAccount.student_id == student_data["aboutMe"]["studentNumber"]))
-        if not result.scalar():
-            db.add(StudentAccount(
-                student_id = student_data["aboutMe"]["studentNumber"],
-                password = "password",
-                user_name = student_data["aboutMe"]["chineseName"],
-                department_major1 = student_data["aboutMe"]["studentNumber"][3:6]
-            ))
-        
-        await db.execute(delete(CourseRecord).where(CourseRecord.student_id == student_data["aboutMe"]["studentNumber"]))
-        
+    try:        
+        await db.execute(delete(CourseRecord).where(CourseRecord.student_id == user["id"]))
         for grade_record in student_data["gradeRecordList"]:
             for course in grade_record["GradeRecords"]:
                 if course["courseCode"] in course_information:
