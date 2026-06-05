@@ -194,7 +194,7 @@ async def get_credit_progress(
                 .where(
                     CourseRecord.student_id == student.student_id,
                     CourseRecord.status == "passed",
-                    CourseInformation.course_type.ilike("%G%") | CourseInformation.course_type == "RPE"
+                    CourseInformation.course_type.ilike("%G%") | (CourseInformation.course_type == "RPE")
                 )
             )
 
