@@ -36,21 +36,25 @@ function App() {
     );
   }
 
+  // Render both views and animate the transition between them for a smooth experience.
   return (
     <div
       style={{
         fontFamily: "'Noto Sans TC', 'PingFang TC', system-ui",
         minHeight: "100vh",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      {detail ? (
-        <DetailView
-          category={detail}
-          onBack={() => setDetail(null)}
-          onLogout={handleLogout}
-          token={token}
-        />
-      ) : (
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          transition: "opacity 320ms ease",
+          opacity: detail ? 0.28 : 1,
+          pointerEvents: detail ? "none" : "auto",
+        }}
+      >
         <Dashboard
           onDetail={setDetail}
           onLogout={handleLogout}
@@ -58,7 +62,27 @@ function App() {
           planetAngles={planetAngles}
           setPlanetAngles={setPlanetAngles}
         />
-      )}
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          transition:
+            "transform 420ms cubic-bezier(.22,1,.36,1), opacity 320ms ease",
+          transform: detail ? "translateY(0)" : "translateY(100%)",
+          opacity: detail ? 1 : 0,
+          pointerEvents: detail ? "auto" : "none",
+          overflowY: "auto",
+        }}
+      >
+        <DetailView
+          category={detail}
+          onBack={() => setDetail(null)}
+          onLogout={handleLogout}
+          token={token}
+        />
+      </div>
     </div>
   );
 }

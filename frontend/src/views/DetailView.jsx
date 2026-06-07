@@ -67,6 +67,44 @@ const XIcon = () => (
 );
 
 // --- Component ---
+const mapCourseType = (type) => {
+  if (!type) return "";
+  const t = String(type).trim().toUpperCase();
+
+  if (t === "R") return "必修";
+  if (t === "P") return "群修";
+  if (t === "E") return "選修";
+  if (t === "G") return "通識";
+  if (t === "RPE") return "體育必修";
+  if (t === "EPE") return "體育選修";
+  if (t === "CD") return "國防";
+
+  const typeMap = {
+    C: "中文",
+    F: "外文",
+    H: "人文",
+    S: "社會",
+    N: "自然",
+    I: "資訊",
+    A: "書院",
+  };
+
+  if (t.startsWith("CG")) {
+    const suffix = t.slice(2);
+    if (!suffix) return "核心通識";
+    const parts = suffix.split("").map((ch) => typeMap[ch] || ch);
+    return `核心${parts.join("、")}通識`;
+  }
+
+  if (t.startsWith("G")) {
+    const suffix = t.slice(1);
+    if (!suffix) return "通識";
+    const parts = suffix.split("").map((ch) => typeMap[ch] || ch);
+    return `${parts.join("、")}通識`;
+  }
+
+  return type;
+};
 
 const DetailView = ({ category, onBack, token }) => {
   const [records, setRecords] = useState([]);
@@ -94,7 +132,7 @@ const DetailView = ({ category, onBack, token }) => {
             return {
               sem: course.semester,
               name: course.course_name,
-              type: course.course_type,
+              type: mapCourseType(course.course_type),
               credit: course.credits,
               score:
                 course.grade ||

@@ -453,6 +453,9 @@ const Dashboard = ({
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setSidebarOpen((v) => !v);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -809,19 +812,6 @@ const Dashboard = ({
         </div>
         <div style={{ display: "flex", gap: "12px", pointerEvents: "auto" }}>
           <button
-            style={{
-              background: "#FFDE96",
-              border: "2px solid #C8A820",
-              borderRadius: "10px",
-              padding: "8px 16px",
-              fontWeight: 800,
-              color: "#6B4400",
-              cursor: "pointer",
-            }}
-          >
-            Contact
-          </button>
-          <button
             onClick={onLogout}
             style={{
               background: "#ffffff",
@@ -836,6 +826,9 @@ const Dashboard = ({
             登出
           </button>
           <button
+            onClick={toggleSidebar}
+            aria-expanded={sidebarOpen}
+            aria-label="開啟選單"
             style={{
               border: "2px solid #C8A840",
               borderRadius: "10px",
@@ -874,6 +867,122 @@ const Dashboard = ({
           </button>
         </div>
       </header>
+
+      {/* Sidebar & Overlay */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 39,
+          pointerEvents: sidebarOpen ? "auto" : "none",
+        }}
+      >
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "rgba(0,0,0,0.36)",
+            opacity: sidebarOpen ? 1 : 0,
+            transition: "opacity 240ms ease",
+          }}
+        />
+        <aside
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            height: "100vh",
+            width: "320px",
+            maxWidth: "92vw",
+            background: "linear-gradient(180deg, #FFFBE8 0%, #FBF9F2 100%)",
+            borderLeft: "4px solid rgba(200,168,48,0.12)",
+            boxShadow: "-24px 0 56px rgba(0,0,0,0.12)",
+            transform: sidebarOpen ? "translateX(0)" : "translateX(100%)",
+            transition: "transform 320ms ease, background 240ms ease",
+            zIndex: 40,
+            padding: "20px",
+            overflowY: "auto",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "12px",
+            }}
+          >
+            <h3
+              style={{
+                margin: 0,
+                fontSize: "16px",
+                fontWeight: 900,
+                color: "#3A2000",
+              }}
+            >
+              選單
+            </h3>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              style={{
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+                fontSize: "18px",
+              }}
+            >
+              ✕
+            </button>
+          </div>
+          <div style={{ fontSize: "14px", color: "#5A4600" }}>
+            <p style={{ marginTop: 0 }}>快速操作</p>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                marginTop: "8px",
+              }}
+            >
+              {data?.categories?.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    setSidebarOpen(false);
+                    onDetail(cat);
+                  }}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #F0E0B0",
+                    background: "#FBF9F2",
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  <div style={{ fontWeight: 800, color: "#3A2000" }}>
+                    {cat.title}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: "#6B4400",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {cat.earned} / {cat.required}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
 
       {/* Orbit Container */}
       <div
