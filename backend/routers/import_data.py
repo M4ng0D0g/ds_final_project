@@ -81,7 +81,7 @@ async def import_student_data(file: UploadFile, user: dict = Depends(get_user), 
                                 status = "failed"
                                 
                     new_course_record = CourseRecord(
-                        student_id=student_data["aboutMe"]["studentNumber"],
+                        student_id=user["id"],
                         course_id=course["courseCode"],
                         semester=f"{course["academicYear"]}-{course["semester"]}",
                         grade=grade,
