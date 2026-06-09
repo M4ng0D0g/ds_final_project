@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect, useRef, useMemo } from "react";
 import CategoryCard from "../components/CategoryCard";
 import HintBox from "../components/HintBox";
-import { getDashboardSummary } from "../api";
+import { getDashboardSummary, importStudentData } from "../api";
 
 const CATEGORY_COLORS = [
   { fromColor: "#FF8A3D", toColor: "#FF3D3D" },
@@ -85,6 +85,195 @@ const SaturnDeco = ({ style }) => (
     <circle cx="26" cy="16" r="4" fill="rgba(255,255,255,0.25)" />
   </svg>
 );
+
+// --- Sub Components ---
+
+const ImportModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (selectedFile) {
+      await onConfirm(selectedFile);
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleClose = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.36)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+      }}
+      onClick={handleClose}
+    >
+      <div
+        style={{
+          background: "#ffffff",
+          borderRadius: "16px",
+          padding: "32px",
+          maxWidth: "480px",
+          width: "90%",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.12)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2
+          style={{
+            fontSize: "20px",
+            fontWeight: 900,
+            color: "#1a1a1a",
+            marginTop: 0,
+            marginBottom: "24px",
+          }}
+        >
+          匯入資料
+        </h2>
+
+        <div
+          style={{
+            marginBottom: "24px",
+          }}
+        >
+          <label
+            style={{
+              display: "block",
+              fontSize: "14px",
+              fontWeight: 600,
+              color: "#4d5868",
+              marginBottom: "12px",
+            }}
+          >
+            選擇檔案
+          </label>
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              height: "120px",
+              border: "2px dashed #c0c0c0",
+              borderRadius: "12px",
+              background: "#fafafa",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+            }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              onChange={handleFileChange}
+              style={{ display: "none" }}
+              accept=".csv,.xlsx,.xls,.json"
+            />
+            {selectedFile ? (
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    color: "#4a90e2",
+                  }}
+                >
+                  ✓ {selectedFile.name}
+                </div>
+                <div
+                  style={{ fontSize: "12px", color: "#999", marginTop: "4px" }}
+                >
+                  {(selectedFile.size / 1024).toFixed(2)} KB
+                </div>
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", color: "#999" }}>
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    marginBottom: "4px",
+                  }}
+                >
+                  點擊選擇檔案
+                </div>
+                <div style={{ fontSize: "12px" }}>
+                  支援: CSV, XLSX, XLS, JSON
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            justifyContent: "flex-end",
+          }}
+        >
+          <button
+            onClick={handleClose}
+            disabled={isLoading}
+            style={{
+              padding: "10px 20px",
+              borderRadius: "8px",
+              border: "1px solid #e0e0e0",
+              background: "#f5f5f5",
+              color: "#1a1a1a",
+              fontWeight: 600,
+              cursor: isLoading ? "not-allowed" : "pointer",
+              opacity: isLoading ? 0.5 : 1,
+            }}
+          >
+            取消
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={!selectedFile || isLoading}
+            style={{
+              padding: "10px 20px",
+              borderRadius: "8px",
+              border: "none",
+              background: selectedFile && !isLoading ? "#4a90e2" : "#d0d0d0",
+              color: "#fff",
+              fontWeight: 600,
+              cursor: selectedFile && !isLoading ? "pointer" : "not-allowed",
+              opacity: isLoading ? 0.7 : 1,
+            }}
+          >
+            {isLoading ? "上傳中..." : "確認"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // --- Sub Components ---
 
@@ -454,8 +643,35 @@ const Dashboard = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   const toggleSidebar = () => setSidebarOpen((v) => !v);
+
+  const handleImportConfirm = async (file) => {
+    setIsImporting(true);
+    try {
+      await importStudentData(token, file);
+      alert("資料匯入成功");
+      setIsImportModalOpen(false);
+      // Refresh dashboard data after successful import
+      const result = await getDashboardSummary(token);
+      const summary = result?.data;
+      if (summary) {
+        const mappedCategories = summary.categories.map(mapBackendCategory);
+        setDashboard((prev) => ({
+          ...prev,
+          categories: mappedCategories,
+          totalEarned: summary.total_credits.earned,
+          totalRequired: summary.total_credits.required,
+        }));
+      }
+    } catch (err) {
+      alert(`匯入失敗: ${err.message}`);
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -945,6 +1161,28 @@ const Dashboard = ({
                 marginTop: "8px",
               }}
             >
+              <button
+                onClick={() => {
+                  setIsImportModalOpen(true);
+                  setSidebarOpen(false);
+                }}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #F0E0B0",
+                  background: "#FFF8DC",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontWeight: 800,
+                  color: "#3A2000",
+                }}
+              >
+                📁 匯入資料
+              </button>
               {data?.categories?.map((cat) => (
                 <button
                   key={cat.id}
@@ -983,6 +1221,13 @@ const Dashboard = ({
           </div>
         </aside>
       </div>
+
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onConfirm={handleImportConfirm}
+        isLoading={isImporting}
+      />
 
       {/* Orbit Container */}
       <div
