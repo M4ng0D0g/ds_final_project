@@ -260,7 +260,7 @@ const DetailView = ({ category, onBack, token }) => {
               </h1>
             </div>
             <div style={{ fontSize: "42px", fontWeight: 900 }}>
-              {Math.round(pct)}%
+              {cat.required != 0 && `${Math.round(pct)}%`}
             </div>
           </div>
 
@@ -276,7 +276,8 @@ const DetailView = ({ category, onBack, token }) => {
             >
               <span>完成進度</span>
               <span>
-                {cat.earned} / {cat.required} {cat.unit}
+                {cat.earned} {cat.required != 0 && `/ ${cat.required}`}{" "}
+                {cat.unit}
               </span>
             </div>
             <ProgressBar pct={pct} color="rgba(255,255,255,0.85)" height={12} />
