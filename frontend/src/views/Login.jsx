@@ -392,11 +392,13 @@ const Login = ({ onLogin }) => {
         body?.data?.token ||
         body?.token ||
         (body && body.data && body.data.token);
+      const role =
+        body?.data?.user?.role || body?.data?.role || body?.role || "student";
       if (!token) {
         setError("No token returned");
         return;
       }
-      onLogin(token);
+      onLogin(token, role);
     } catch (err) {
       setError(err.message || String(err));
     }

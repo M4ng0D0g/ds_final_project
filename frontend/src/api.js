@@ -63,6 +63,25 @@ export const getCategoryData = async (token, categoryId) => {
   });
 };
 
+export const getTeacherStudentCreditProgress = async (
+  token,
+  enrollmentYear,
+  departmentId = "703",
+  page = 1,
+  size = 20,
+) => {
+  return await fetchJSON(`${API_BASE}/teachers/students/credit-progress`, {
+    method: "POST",
+    headers: buildHeaders(token),
+    body: JSON.stringify({
+      enrollment_year: enrollmentYear,
+      department_id: departmentId,
+      page,
+      size,
+    }),
+  });
+};
+
 export const importStudentData = async (token, file) => {
   const formData = new FormData();
   formData.append("file", file);
