@@ -1,0 +1,16 @@
+{
+  "name": "ds_final_project",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {},
+  "scripts": {
+    "obs:start": "docker compose up -d",
+    "obs:stop": "docker compose down",
+    "test:normal": "bash report.sh normal",
+    "test:peak": "bash report.sh peak",
+    "test:stress": "bash report.sh stress"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}

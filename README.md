@@ -19,6 +19,18 @@ docker compose logs -f backend
 docker compose logs -f frontend
 ```
 
+壓力測試
+```bash
+限制 VU（測 API 是否穩）
+k6 run tests/normal_test.js --vus 1 --duration 10s
+
+看詳細 HTTP log
+k6 run tests/peak_test.js --http-debug="full"
+
+快速 smoke test（超輕量）
+k6 run tests/normal_test.js --vus 1 --duration 5s
+```
+
 由於資料庫連線的 hostname 已經變成 db，所以必須進入後端容器內才能執行 alembic 指令。
 ```bash
 # 1. 產生新的 migration 檔案 (請替換 "init" 為你的描述)
@@ -42,6 +54,10 @@ docker-compose down -v
 ```bash
 docker-compose exec backend python -m seeds.seed_db
 ```
+
+
+
+
 
 ## Preview
 https://gemini.google.com/share/0bf2827f4aa6
