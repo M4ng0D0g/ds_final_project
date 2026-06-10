@@ -1,7 +1,11 @@
 ﻿import React, { useState, useEffect, useRef, useMemo } from "react";
 import CategoryCard from "../components/CategoryCard";
 import HintBox from "../components/HintBox";
-import { getDashboardSummary } from "../api";
+import {
+  getDashboardSummary,
+  importStudentData,
+  getTeacherStudentCreditProgress,
+} from "../api";
 
 const CATEGORY_COLORS = [
   { fromColor: "#FF8A3D", toColor: "#FF3D3D" },
@@ -85,6 +89,195 @@ const SaturnDeco = ({ style }) => (
     <circle cx="26" cy="16" r="4" fill="rgba(255,255,255,0.25)" />
   </svg>
 );
+
+// --- Sub Components ---
+
+const ImportModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (selectedFile) {
+      await onConfirm(selectedFile);
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleClose = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.36)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+      }}
+      onClick={handleClose}
+    >
+      <div
+        style={{
+          background: "#ffffff",
+          borderRadius: "16px",
+          padding: "32px",
+          maxWidth: "480px",
+          width: "90%",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.12)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2
+          style={{
+            fontSize: "20px",
+            fontWeight: 900,
+            color: "#1a1a1a",
+            marginTop: 0,
+            marginBottom: "24px",
+          }}
+        >
+          匯入資料
+        </h2>
+
+        <div
+          style={{
+            marginBottom: "24px",
+          }}
+        >
+          <label
+            style={{
+              display: "block",
+              fontSize: "14px",
+              fontWeight: 600,
+              color: "#4d5868",
+              marginBottom: "12px",
+            }}
+          >
+            選擇檔案
+          </label>
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              height: "120px",
+              border: "2px dashed #c0c0c0",
+              borderRadius: "12px",
+              background: "#fafafa",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+            }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              onChange={handleFileChange}
+              style={{ display: "none" }}
+              accept=".csv,.xlsx,.xls,.json"
+            />
+            {selectedFile ? (
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    color: "#4a90e2",
+                  }}
+                >
+                  ✓ {selectedFile.name}
+                </div>
+                <div
+                  style={{ fontSize: "12px", color: "#999", marginTop: "4px" }}
+                >
+                  {(selectedFile.size / 1024).toFixed(2)} KB
+                </div>
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", color: "#999" }}>
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    marginBottom: "4px",
+                  }}
+                >
+                  點擊選擇檔案
+                </div>
+                <div style={{ fontSize: "12px" }}>
+                  支援: CSV, XLSX, XLS, JSON
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            justifyContent: "flex-end",
+          }}
+        >
+          <button
+            onClick={handleClose}
+            disabled={isLoading}
+            style={{
+              padding: "10px 20px",
+              borderRadius: "8px",
+              border: "1px solid #e0e0e0",
+              background: "#f5f5f5",
+              color: "#1a1a1a",
+              fontWeight: 600,
+              cursor: isLoading ? "not-allowed" : "pointer",
+              opacity: isLoading ? 0.5 : 1,
+            }}
+          >
+            取消
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={!selectedFile || isLoading}
+            style={{
+              padding: "10px 20px",
+              borderRadius: "8px",
+              border: "none",
+              background: selectedFile && !isLoading ? "#4a90e2" : "#d0d0d0",
+              color: "#fff",
+              fontWeight: 600,
+              cursor: selectedFile && !isLoading ? "pointer" : "not-allowed",
+              opacity: isLoading ? 0.7 : 1,
+            }}
+          >
+            {isLoading ? "上傳中..." : "確認"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // --- Sub Components ---
 
@@ -447,12 +640,96 @@ const Dashboard = ({
   onDetail,
   onLogout,
   token,
+  role,
   planetAngles,
   setPlanetAngles,
 }) => {
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [teacherResults, setTeacherResults] = useState([]);
+  const [teacherLoading, setTeacherLoading] = useState(false);
+  const [teacherError, setTeacherError] = useState(null);
+  const [selectedEnrollmentYears, setSelectedEnrollmentYears] = useState([
+    "111",
+    "112",
+    "113",
+    "114",
+  ]);
+
+  const toggleSidebar = () => setSidebarOpen((v) => !v);
+
+  const handleToggleEnrollmentYear = (year) => {
+    setSelectedEnrollmentYears((prev) =>
+      prev.includes(year)
+        ? prev.filter((item) => item !== year)
+        : [...prev, year],
+    );
+  };
+
+  useEffect(() => {
+    const fetchTeacherStudents = async () => {
+      if (!token || role !== "teacher") return;
+      if (selectedEnrollmentYears.length === 0) {
+        setTeacherResults([]);
+        setTeacherError(null);
+        setTeacherLoading(false);
+        return;
+      }
+
+      setTeacherLoading(true);
+      setTeacherError(null);
+      try {
+        const responses = await Promise.all(
+          selectedEnrollmentYears.map((year) =>
+            getTeacherStudentCreditProgress(token, year),
+          ),
+        );
+
+        const results = responses.flatMap((response, index) => {
+          const year = selectedEnrollmentYears[index];
+          const data = response?.data || [];
+          return data.map((item) => ({ ...item, enrollment_year: year }));
+        });
+
+        setTeacherResults(results);
+      } catch (err) {
+        setTeacherError(err.message || "無法取得學生資料");
+      } finally {
+        setTeacherLoading(false);
+      }
+    };
+
+    fetchTeacherStudents();
+  }, [token, role, selectedEnrollmentYears]);
+
+  const handleImportConfirm = async (file) => {
+    setIsImporting(true);
+    try {
+      await importStudentData(token, file);
+      alert("資料匯入成功");
+      setIsImportModalOpen(false);
+      // Refresh dashboard data after successful import
+      const result = await getDashboardSummary(token);
+      const summary = result?.data;
+      if (summary) {
+        const mappedCategories = summary.categories.map(mapBackendCategory);
+        setDashboard((prev) => ({
+          ...prev,
+          categories: mappedCategories,
+          totalEarned: summary.total_credits.earned,
+          totalRequired: summary.total_credits.required,
+        }));
+      }
+    } catch (err) {
+      alert(`匯入失敗: ${err.message}`);
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -495,10 +772,12 @@ const Dashboard = ({
       }
     };
 
-    if (token) {
+    if (token && role !== "teacher") {
       fetchData();
+    } else if (token && role === "teacher") {
+      setLoading(false);
     }
-  }, [token]);
+  }, [token, role]);
 
   if (loading) {
     return (
@@ -605,6 +884,9 @@ const Dashboard = ({
   }
 
   const data = dashboard;
+  const isTeacherView = role === "teacher";
+  const displayYear = data?.catalogYear || new Date().getFullYear();
+  const teacherLastUpdated = new Date().toLocaleDateString("zh-TW");
 
   return (
     <div
@@ -612,7 +894,8 @@ const Dashboard = ({
         height: "100vh",
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden",
+        overflowY: isTeacherView ? "auto" : "hidden",
+        overflowX: "hidden",
         background: "#F6FFEA",
         position: "relative",
       }}
@@ -701,6 +984,10 @@ const Dashboard = ({
           alignItems: "flex-start",
           zIndex: 10,
           pointerEvents: "none",
+          position: isTeacherView ? "sticky" : "relative",
+          top: isTeacherView ? 0 : "auto",
+          background: isTeacherView ? "#111827" : "transparent",
+          boxShadow: isTeacherView ? "0 12px 30px rgba(0, 0, 0, 0.35)" : "none",
         }}
       >
         <div style={{ pointerEvents: "none" }}>
@@ -708,7 +995,7 @@ const Dashboard = ({
             style={{
               fontSize: "12px",
               fontWeight: 800,
-              color: "#8B7030",
+              color: isTeacherView ? "#CBD5E1" : "#8B7030",
               textTransform: "uppercase",
               letterSpacing: "1px",
             }}
@@ -728,7 +1015,7 @@ const Dashboard = ({
               style={{
                 fontSize: "26px",
                 fontWeight: 900,
-                color: "#3A2000",
+                color: isTeacherView ? "#FFFFFF" : "#3A2000",
                 margin: 0,
               }}
             >
@@ -736,18 +1023,18 @@ const Dashboard = ({
             </h1>
             <div
               style={{
-                background: "#FFDE96",
-                color: "#6B4400",
+                background: isTeacherView ? "#FBBF24" : "#FFDE96",
+                color: isTeacherView ? "#111827" : "#6B4400",
                 borderRadius: "8px",
                 padding: "3px 10px",
                 fontSize: "13px",
                 fontWeight: 800,
               }}
             >
-              {data.catalogYear}
+              {displayYear}
             </div>
           </div>
-          {data.studentInfo && (
+          {!isTeacherView && data?.studentInfo && (
             <div
               style={{
                 display: "flex",
@@ -809,19 +1096,6 @@ const Dashboard = ({
         </div>
         <div style={{ display: "flex", gap: "12px", pointerEvents: "auto" }}>
           <button
-            style={{
-              background: "#FFDE96",
-              border: "2px solid #C8A820",
-              borderRadius: "10px",
-              padding: "8px 16px",
-              fontWeight: 800,
-              color: "#6B4400",
-              cursor: "pointer",
-            }}
-          >
-            Contact
-          </button>
-          <button
             onClick={onLogout}
             style={{
               background: "#ffffff",
@@ -836,6 +1110,9 @@ const Dashboard = ({
             登出
           </button>
           <button
+            onClick={toggleSidebar}
+            aria-expanded={sidebarOpen}
+            aria-label="開啟選單"
             style={{
               border: "2px solid #C8A840",
               borderRadius: "10px",
@@ -875,6 +1152,153 @@ const Dashboard = ({
         </div>
       </header>
 
+      {/* Sidebar & Overlay */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 39,
+          pointerEvents: sidebarOpen ? "auto" : "none",
+        }}
+      >
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "rgba(0,0,0,0.36)",
+            opacity: sidebarOpen ? 1 : 0,
+            transition: "opacity 240ms ease",
+          }}
+        />
+        <aside
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            height: "100vh",
+            width: "320px",
+            maxWidth: "92vw",
+            background: "linear-gradient(180deg, #FFFBE8 0%, #FBF9F2 100%)",
+            borderLeft: "4px solid rgba(200,168,48,0.12)",
+            boxShadow: "-24px 0 56px rgba(0,0,0,0.12)",
+            transform: sidebarOpen ? "translateX(0)" : "translateX(100%)",
+            transition: "transform 320ms ease, background 240ms ease",
+            zIndex: 40,
+            padding: "20px",
+            overflowY: "auto",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "12px",
+            }}
+          >
+            <h3
+              style={{
+                margin: 0,
+                fontSize: "16px",
+                fontWeight: 900,
+                color: "#3A2000",
+              }}
+            >
+              選單
+            </h3>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              style={{
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+                fontSize: "18px",
+              }}
+            >
+              ✕
+            </button>
+          </div>
+          <div style={{ fontSize: "14px", color: "#5A4600" }}>
+            <p style={{ marginTop: 0 }}>快速操作</p>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                marginTop: "8px",
+              }}
+            >
+              {!isTeacherView && (
+                <button
+                  onClick={() => {
+                    setIsImportModalOpen(true);
+                    setSidebarOpen(false);
+                  }}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #F0E0B0",
+                    background: "#FFF8DC",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    fontWeight: 800,
+                    color: "#3A2000",
+                  }}
+                >
+                  📁 匯入資料
+                </button>
+              )}
+              {data?.categories?.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    setSidebarOpen(false);
+                    onDetail(cat);
+                  }}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #F0E0B0",
+                    background: "#FBF9F2",
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  <div style={{ fontWeight: 800, color: "#3A2000" }}>
+                    {cat.title}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: "#6B4400",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {cat.earned} / {cat.required}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onConfirm={handleImportConfirm}
+        isLoading={isImporting}
+      />
+
       {/* Orbit Container */}
       <div
         style={{
@@ -884,12 +1308,291 @@ const Dashboard = ({
           transform: "translateY(-60px)",
         }}
       >
-        <OrbitSystem
-          data={data}
-          onDetail={onDetail}
-          angles={planetAngles}
-          setAngles={setPlanetAngles}
-        />
+        {isTeacherView ? (
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              padding: "72px 40px 24px",
+              boxSizing: "border-box",
+              overflowY: "auto",
+              background: "rgba(255,255,255,0.72)",
+              borderRadius: "28px",
+              border: "1px solid rgba(200,168,48,0.12)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: "12px",
+                marginBottom: "24px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 800,
+                  color: "#3A2000",
+                }}
+              >
+                選擇入學年級
+              </div>
+              {["111", "112", "113", "114"].map((year) => (
+                <label
+                  key={year}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    color: "#3A2000",
+                    userSelect: "none",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedEnrollmentYears.includes(year)}
+                    onChange={() => handleToggleEnrollmentYear(year)}
+                    style={{
+                      width: "16px",
+                      height: "16px",
+                      accentColor: "#4a90e2",
+                    }}
+                  />
+                  {year}
+                </label>
+              ))}
+            </div>
+
+            <div
+              style={{
+                marginBottom: "24px",
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                gap: "12px",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ color: "#4d5868", fontSize: "14px" }}>
+                已選擇年級：
+                {selectedEnrollmentYears.length > 0
+                  ? selectedEnrollmentYears.join("、")
+                  : "請至少選擇一個年級"}
+              </div>
+              <div
+                style={{ fontSize: "14px", fontWeight: 700, color: "#3A2000" }}
+              >
+                共 {teacherResults.length} 位學生
+              </div>
+            </div>
+
+            {teacherError && (
+              <div
+                style={{
+                  padding: "16px",
+                  background: "#fee",
+                  border: "1px solid #fcc",
+                  borderRadius: "14px",
+                  color: "#c33",
+                  marginBottom: "24px",
+                }}
+              >
+                {teacherError}
+              </div>
+            )}
+
+            {teacherLoading ? (
+              <div
+                style={{
+                  minHeight: "280px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#4a90e2",
+                  fontWeight: 700,
+                }}
+              >
+                載入中，請稍候...
+              </div>
+            ) : teacherResults.length === 0 ? (
+              <div
+                style={{
+                  minHeight: "280px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#666",
+                  fontSize: "15px",
+                }}
+              >
+                尚未有符合條件的學生資料。
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                  gap: "20px",
+                }}
+              >
+                {teacherResults.map((student) => (
+                  <div
+                    key={
+                      student.student_info.student_id + student.enrollment_year
+                    }
+                    style={{
+                      background: "#fff",
+                      borderRadius: "20px",
+                      padding: "18px",
+                      boxShadow: "0 16px 40px rgba(0,0,0,0.05)",
+                      border: "1px solid rgba(200,168,48,0.12)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        marginBottom: "12px",
+                        gap: "12px",
+                      }}
+                    >
+                      <div>
+                        <div
+                          style={{
+                            fontSize: "16px",
+                            fontWeight: 800,
+                            color: "#3A2000",
+                          }}
+                        >
+                          {student.student_info.name}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "13px",
+                            color: "#6B4400",
+                            marginTop: "4px",
+                          }}
+                        >
+                          {student.student_info.student_id} •{" "}
+                          {student.student_info.major1}
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: student.student_info.is_pass
+                            ? "#22896e"
+                            : "#c33",
+                          fontWeight: 700,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {student.student_info.is_pass ? "合格" : "未通過"}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        padding: "12px 14px",
+                        background: "#f8faf9",
+                        borderRadius: "14px",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: "14px",
+                          fontWeight: 700,
+                          color: "#3A2000",
+                          marginBottom: "6px",
+                        }}
+                      >
+                        總學分
+                      </div>
+                      <div style={{ color: "#4d5868", fontSize: "13px" }}>
+                        {student.total_credits.earned} /{" "}
+                        {student.total_credits.required}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "12px",
+                      }}
+                    >
+                      {student.categories.map((category) => (
+                        <div
+                          key={category.id}
+                          style={{
+                            padding: "12px 14px",
+                            background: "#fff",
+                            borderRadius: "14px",
+                            border: "1px solid rgba(224, 224, 224, 0.9)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              marginBottom: "8px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: "14px",
+                                fontWeight: 700,
+                                color: "#3A2000",
+                              }}
+                            >
+                              {category.name}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: "13px",
+                                color: "#6B4400",
+                                fontWeight: 700,
+                              }}
+                            >
+                              {category.earned} / {category.required}
+                            </div>
+                          </div>
+                          {category.hint && (
+                            <div
+                              style={{
+                                fontSize: "12px",
+                                color: "#666",
+                                whiteSpace: "pre-wrap",
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {category.hint}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <OrbitSystem
+            data={data}
+            onDetail={onDetail}
+            angles={planetAngles}
+            setAngles={setPlanetAngles}
+          />
+        )}
       </div>
 
       {/* Footer */}
@@ -902,7 +1605,8 @@ const Dashboard = ({
           zIndex: 10,
         }}
       >
-        最後更新：{data.lastUpdated} | 系統維護：(02) 2345-6789 #123
+        最後更新：{isTeacherView ? teacherLastUpdated : data.lastUpdated} |
+        系統維護：(02) 2345-6789 #123
       </footer>
     </div>
   );

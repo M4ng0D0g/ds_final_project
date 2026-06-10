@@ -6,21 +6,28 @@ import Login from "./views/Login";
 function App() {
   const [detail, setDetail] = useState(null);
   const [token, setToken] = useState(null);
+  const [userRole, setUserRole] = useState("student");
   const [planetAngles, setPlanetAngles] = useState([90, 0, 270, 180]);
 
   useEffect(() => {
     const t = localStorage.getItem("token");
+    const role = localStorage.getItem("userRole") || "student";
     if (t) setToken(t);
+    setUserRole(role);
   }, []);
 
-  const handleLogin = (newToken) => {
+  const handleLogin = (newToken, role = "student") => {
     localStorage.setItem("token", newToken);
+    localStorage.setItem("userRole", role);
     setToken(newToken);
+    setUserRole(role);
   };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userRole");
     setToken(null);
+    setUserRole("student");
   };
 
   if (!token) {
@@ -36,29 +43,54 @@ function App() {
     );
   }
 
+  // Render both views and animate the transition between them for a smooth experience.
   return (
     <div
       style={{
         fontFamily: "'Noto Sans TC', 'PingFang TC', system-ui",
         minHeight: "100vh",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      {detail ? (
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          transition: "opacity 320ms ease",
+          opacity: detail ? 0.28 : 1,
+          pointerEvents: detail ? "none" : "auto",
+        }}
+      >
+        <Dashboard
+          onDetail={setDetail}
+          onLogout={handleLogout}
+          token={token}
+          role={userRole}
+          planetAngles={planetAngles}
+          setPlanetAngles={setPlanetAngles}
+        />
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          transition:
+            "transform 420ms cubic-bezier(.22,1,.36,1), opacity 320ms ease",
+          transform: detail ? "translateY(0)" : "translateY(100%)",
+          opacity: detail ? 1 : 0,
+          pointerEvents: detail ? "auto" : "none",
+          overflowY: "auto",
+        }}
+      >
         <DetailView
           category={detail}
           onBack={() => setDetail(null)}
           onLogout={handleLogout}
           token={token}
         />
-      ) : (
-        <Dashboard
-          onDetail={setDetail}
-          onLogout={handleLogout}
-          token={token}
-          planetAngles={planetAngles}
-          setPlanetAngles={setPlanetAngles}
-        />
-      )}
+      </div>
     </div>
   );
 }
