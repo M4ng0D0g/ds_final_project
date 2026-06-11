@@ -222,9 +222,7 @@ const ImportModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
                 >
                   點擊選擇檔案
                 </div>
-                <div style={{ fontSize: "12px" }}>
-                  支援: CSV, XLSX, XLS, JSON
-                </div>
+                <div style={{ fontSize: "12px" }}>僅支援JSON</div>
               </div>
             )}
           </div>
