@@ -1259,6 +1259,7 @@ const Dashboard = ({
           fontSize: "11px",
           color: "#9A8050",
           zIndex: 10,
+          pointerEvents: "none",
         }}
       >
         最後更新：{data.lastUpdated} | 系統維護：(02) 2345-6789 #123
