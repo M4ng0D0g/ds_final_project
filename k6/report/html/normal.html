@@ -3,7 +3,7 @@
   <html lang="zh-TW">
   <head>
     <meta charset="UTF-8">
-    <title>k6 企業級效能監控報告 v4</title>
+    <title>k6 全鏈路師生監控報告</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
       :root {
@@ -16,67 +16,56 @@
         --primary-light: #eef2ff;
       }
       body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 40px; background: var(--bg-main); color: var(--text-main); margin: 0; line-height: 1.5; }
-      
-      /* Header 區塊 */
       .header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 20px; margin-bottom: 30px; }
       .header-title h1 { margin: 0; font-size: 2.2rem; font-weight: 800; background: linear-gradient(to right, #3b82f6, #4f46e5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
       .header-meta { display: flex; gap: 15px; font-size: 0.9rem; color: var(--text-muted); }
       .badge { background: var(--primary-light); color: var(--primary); padding: 4px 12px; border-radius: 20px; font-weight: 600; text-transform: uppercase; }
-
-      /* 四欄 KPI 看板 */
       .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
       .kpi-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
       .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary); }
       .kpi-title { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
       .kpi-value { font-size: 2rem; font-weight: 700; margin-top: 8px; color: var(--text-main); }
-      
-      /* 兩欄圖表與洞察 */
-      .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 30px; }
+      .main-grid { display: grid; grid-template-columns: 2.5fr 1fr; gap: 25px; margin-bottom: 30px; }
       .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
       .card h2 { font-size: 1.25rem; font-weight: 700; margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-      
-      /* 響應式優雅表格 */
       .table-wrapper { overflow-x: auto; margin-top: 15px; }
       table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem; }
       th { background: #f1f5f9; color: var(--text-muted); font-weight: 600; padding: 14px; border-bottom: 2px solid var(--border-color); }
       td { padding: 14px; border-bottom: 1px solid var(--border-color); color: #334155; }
       tr:hover { background-color: #f8fafc; }
       .error-text { color: #ef4444; font-weight: 600; }
-      
-      /* 狀態與瓶頸樣式 */
       .status-box { font-size: 2.2rem; font-weight: 900; text-align: center; padding: 15px; border-radius: 12px; margin-top: 10px; letter-spacing: 0.05em; }
       .bottleneck-box { background: #fff7ed; border: 1px dashed #ffedd5; padding: 15px; border-radius: 12px; margin-top: 15px; }
-
-      .chart-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 25px; }
+      .chart-container { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; margin-top: 25px; }
     </style>
   </head>
   <body>
 
     <div class="header-container">
       <div class="header-title">
-        <h1>🚀 Full Observability Performance Insights</h1>
+        <h1>🚀 Full Observability Campus Insights</h1>
         <div class="header-meta" style="margin-top: 5px;">
-          <span>📅 執行時間: <strong>6/11/2026, 3:15:12 AM</strong></span>
-          <span>⏱️ 測試歷時: <strong>31.1 秒</strong></span>
+          <span>📅 綜合報告生成時間: <strong>6/11/2026, 10:06:45 PM</strong></span>
+          <span>⏱️ 測試歷時: <strong>30.1 秒</strong></span>
         </div>
       </div>
       <div>
-        <span class="badge">k6 Engine v4</span>
+        <span class="badge">Mixed Traffic Mode</span>
       </div>
     </div>
 
     <div class="kpi-grid">
       <div class="kpi-card" style="--primary: #3b82f6">
         <div class="kpi-title">總請求發送量 (Total Requests)</div>
-        <div class="kpi-value">1,077</div>
+        <div class="kpi-value">1,267</div>
       </div>
       <div class="kpi-card" style="--primary: #10b981">
         <div class="kpi-title">整體成功率 (Success Rate)</div>
-        <div class="kpi-value" style="color: #10b981">95.82%</div>
+        <div class="kpi-value" style="color: #10b981">99.29%</div>
       </div>
       <div class="kpi-card" style="--primary: #ec4899">
         <div class="kpi-title">平均吞吐量 (Avg Throughput)</div>
-        <div class="kpi-value">34.6 <span style="font-size: 1rem; color: var(--text-muted)">RPS</span></div>
+        <div class="kpi-value">42.1 <span style="font-size: 1rem; color: var(--text-muted)">RPS</span></div>
       </div>
       <div class="kpi-card" style="--primary: #6366f1">
         <div class="kpi-title">最大測試併發 (Max VUs)</div>
@@ -86,7 +75,7 @@
 
     <div class="main-grid">
       <div class="card">
-        <h2>📊 各節點效能完整矩陣 (Metrics Data Matrix)</h2>
+        <h2>📊 師生端各節點效能完整矩陣 (Metrics Data Matrix)</h2>
         <div class="table-wrapper">
           <table>
             <thead>
@@ -102,116 +91,278 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td><strong>Login (登入驗證)</strong></td>
-                <td>269</td>
-                <td>41.6 ms</td>
-                <td>45.1 ms</td>
-                <td>49.1 ms</td>
-                <td style="font-weight:700; color:#4f46e5;">49.8 ms</td>
-                <td>52.8 ms</td>
-                <td class="">0.00%</td>
-              </tr>
-              <tr>
-                <td><strong>Summary (數據總覽)</strong></td>
-                <td>269</td>
-                <td>4.4 ms</td>
-                <td>48.0 ms</td>
-                <td>55.9 ms</td>
-                <td style="font-weight:700; color:#4f46e5;">60.0 ms</td>
-                <td>72.0 ms</td>
-                <td class="error-text">3.35%</td>
-              </tr>
-              <tr>
-                <td><strong>Category (分類查詢)</strong></td>
-                <td>0</td>
-                <td>0.0 ms</td>
-                <td>0.0 ms</td>
-                <td>0.0 ms</td>
-                <td style="font-weight:700; color:#4f46e5;">0.0 ms</td>
-                <td>0.0 ms</td>
-                <td class="">0.00%</td>
-              </tr>
+              
+    <tr>
+      <td><strong>Login (學生登入驗證)</strong></td>
+      <td>259</td>
+      <td>0.0 ms</td>
+      <td>44.7 ms</td>
+      <td>46.8 ms</td>
+      <td style="font-weight:700; color:#4f46e5;">48.2 ms</td>
+      <td>51.8 ms</td>
+      <td class="">0.00%</td>
+    </tr>
+  
+    <tr>
+      <td><strong>Summary (學分數據總覽)</strong></td>
+      <td>259</td>
+      <td>4.8 ms</td>
+      <td>51.9 ms</td>
+      <td>55.5 ms</td>
+      <td style="font-weight:700; color:#4f46e5;">56.2 ms</td>
+      <td>75.9 ms</td>
+      <td class="error-text">2.32%</td>
+    </tr>
+  
+    <tr>
+      <td><strong>Category (學分分類查詢)</strong></td>
+      <td>259</td>
+      <td>0.0 ms</td>
+      <td>44.0 ms</td>
+      <td>47.9 ms</td>
+      <td style="font-weight:700; color:#4f46e5;">48.0 ms</td>
+      <td>51.9 ms</td>
+      <td class="">0.00%</td>
+    </tr>
+  
+    <tr>
+      <td><strong>Teacher Register (教師註冊)</strong></td>
+      <td>46</td>
+      <td>0.0 ms</td>
+      <td>51.9 ms</td>
+      <td>55.8 ms</td>
+      <td style="font-weight:700; color:#4f46e5;">56.0 ms</td>
+      <td>59.9 ms</td>
+      <td class="">0.00%</td>
+    </tr>
+  
+    <tr>
+      <td><strong>Teacher Login (教師登入驗證)</strong></td>
+      <td>46</td>
+      <td>43.3 ms</td>
+      <td>43.9 ms</td>
+      <td>47.9 ms</td>
+      <td style="font-weight:700; color:#4f46e5;">48.1 ms</td>
+      <td>51.7 ms</td>
+      <td class="">0.00%</td>
+    </tr>
+  
+    <tr>
+      <td><strong>Course Search (全校課程檢索)</strong></td>
+      <td>46</td>
+      <td>1.3 ms</td>
+      <td>2.3 ms</td>
+      <td>2.9 ms</td>
+      <td style="font-weight:700; color:#4f46e5;">3.1 ms</td>
+      <td>4.0 ms</td>
+      <td class="">0.00%</td>
+    </tr>
+  
+    <tr>
+      <td><strong>Credit Progress (學生進度調閱)</strong></td>
+      <td>46</td>
+      <td>0.1 ms</td>
+      <td>26.1 ms</td>
+      <td>49.9 ms</td>
+      <td style="font-weight:700; color:#4f46e5;">50.3 ms</td>
+      <td>69.8 ms</td>
+      <td class="error-text">2.17%</td>
+    </tr>
+  
+    <tr>
+      <td><strong>Student Records (歷年修課紀錄)</strong></td>
+      <td>46</td>
+      <td>44.1 ms</td>
+      <td>47.6 ms</td>
+      <td>51.3 ms</td>
+      <td style="font-weight:700; color:#4f46e5;">52.0 ms</td>
+      <td>55.3 ms</td>
+      <td class="">0.00%</td>
+    </tr>
+  
             </tbody>
           </table>
         </div>
       </div>
 
-      <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div class="card" style="display: flex; flex-direction: column; justify-content: flex-start; gap: 20px;">
         <div>
           <h2>🚦 System Health</h2>
-          <div class="status-box" style="color: #eab308; background: #eab30812;">
-            WARNING
+          <div class="status-box" style="color: #22c55e; background: #22c55e12;">
+            STABLE
           </div>
         </div>
         
-        <div class="bottleneck-box">
+        <div class="bottleneck-box" style="margin-top: 0;">
           <h3 style="margin: 0 0 8px 0; color: #c2410c; font-size: 0.95rem; text-transform: uppercase;">🔥 Performance Bottleneck</h3>
-          <p style="margin: 0; font-size: 1.15rem; font-weight: 700; color: #9a3412;">👑 Summary</p>
-          <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #7c2d12;">該端點的 p95 延遲高達 <strong>60.0 ms</strong>，為目前系統中阻礙併發擴展的核心死穴。</p>
+          <p style="margin: 0; font-size: 1.15rem; font-weight: 700; color: #9a3412;">👑 Summary (學分數據總覽)</p>
+          <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #7c2d12;">該端點的 p95 延遲高達 <strong>56.2 ms</strong>，為目前系統中阻礙併發擴展的核心死穴。</p>
         </div>
       </div>
     </div>
 
     <div class="chart-container">
       <div class="card">
-        <h3>📊 多維度延遲對比 (Latency Distribution Breakdown)</h3>
+        <h3>📊 8 大端點多維度延遲對比 (Latency Distribution Breakdown)</h3>
         <canvas id="latencyChart"></canvas>
       </div>
+      
       <div class="card">
-        <h3>📈 API 負載權重分配 (Traffic Load Distribution)</h3>
-        <canvas id="apiChart"></canvas>
+        <h3>📈 校園流量分配實際數據 (Traffic Load Distribution)</h3>
+        <div class="table-wrapper">
+          <table style="font-size: 0.9rem;">
+            <thead>
+              <tr>
+                <th>API 節點縮寫</th>
+                <th>請求總數</th>
+                <th>負載權重佔比 (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+      <tr>
+        <td><strong>Login</strong></td>
+        <td>259</td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="flex: 1; background: #f1f5f9; height: 6px; border-radius: 3px; overflow: hidden; border: 1px solid #e2e8f0;">
+              <div style="background: linear-gradient(to right, #6366f1, #4f46e5); width: 20.4%; height: 100%;"></div>
+            </div>
+            <span style="font-weight: 700; min-width: 45px; text-align: right; color: #475569;">20.4%</span>
+          </div>
+        </td>
+      </tr>
+    
+      <tr>
+        <td><strong>Summary</strong></td>
+        <td>259</td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="flex: 1; background: #f1f5f9; height: 6px; border-radius: 3px; overflow: hidden; border: 1px solid #e2e8f0;">
+              <div style="background: linear-gradient(to right, #6366f1, #4f46e5); width: 20.4%; height: 100%;"></div>
+            </div>
+            <span style="font-weight: 700; min-width: 45px; text-align: right; color: #475569;">20.4%</span>
+          </div>
+        </td>
+      </tr>
+    
+      <tr>
+        <td><strong>Category</strong></td>
+        <td>259</td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="flex: 1; background: #f1f5f9; height: 6px; border-radius: 3px; overflow: hidden; border: 1px solid #e2e8f0;">
+              <div style="background: linear-gradient(to right, #6366f1, #4f46e5); width: 20.4%; height: 100%;"></div>
+            </div>
+            <span style="font-weight: 700; min-width: 45px; text-align: right; color: #475569;">20.4%</span>
+          </div>
+        </td>
+      </tr>
+    
+      <tr>
+        <td><strong>TeacherRegister</strong></td>
+        <td>46</td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="flex: 1; background: #f1f5f9; height: 6px; border-radius: 3px; overflow: hidden; border: 1px solid #e2e8f0;">
+              <div style="background: linear-gradient(to right, #6366f1, #4f46e5); width: 3.6%; height: 100%;"></div>
+            </div>
+            <span style="font-weight: 700; min-width: 45px; text-align: right; color: #475569;">3.6%</span>
+          </div>
+        </td>
+      </tr>
+    
+      <tr>
+        <td><strong>TeacherLogin</strong></td>
+        <td>46</td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="flex: 1; background: #f1f5f9; height: 6px; border-radius: 3px; overflow: hidden; border: 1px solid #e2e8f0;">
+              <div style="background: linear-gradient(to right, #6366f1, #4f46e5); width: 3.6%; height: 100%;"></div>
+            </div>
+            <span style="font-weight: 700; min-width: 45px; text-align: right; color: #475569;">3.6%</span>
+          </div>
+        </td>
+      </tr>
+    
+      <tr>
+        <td><strong>CourseSearch</strong></td>
+        <td>46</td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="flex: 1; background: #f1f5f9; height: 6px; border-radius: 3px; overflow: hidden; border: 1px solid #e2e8f0;">
+              <div style="background: linear-gradient(to right, #6366f1, #4f46e5); width: 3.6%; height: 100%;"></div>
+            </div>
+            <span style="font-weight: 700; min-width: 45px; text-align: right; color: #475569;">3.6%</span>
+          </div>
+        </td>
+      </tr>
+    
+      <tr>
+        <td><strong>CreditProgress</strong></td>
+        <td>46</td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="flex: 1; background: #f1f5f9; height: 6px; border-radius: 3px; overflow: hidden; border: 1px solid #e2e8f0;">
+              <div style="background: linear-gradient(to right, #6366f1, #4f46e5); width: 3.6%; height: 100%;"></div>
+            </div>
+            <span style="font-weight: 700; min-width: 45px; text-align: right; color: #475569;">3.6%</span>
+          </div>
+        </td>
+      </tr>
+    
+      <tr>
+        <td><strong>StudentRecords</strong></td>
+        <td>46</td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="flex: 1; background: #f1f5f9; height: 6px; border-radius: 3px; overflow: hidden; border: 1px solid #e2e8f0;">
+              <div style="background: linear-gradient(to right, #6366f1, #4f46e5); width: 3.6%; height: 100%;"></div>
+            </div>
+            <span style="font-weight: 700; min-width: 45px; text-align: right; color: #475569;">3.6%</span>
+          </div>
+        </td>
+      </tr>
+    
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
     <script>
-      // 📊 1. 響應時間多維度長條圖 (增加 p50, p90, p95 對比)
+      // 📊 1. 響應時間多維度長條圖 (橫向配置)
       new Chart(document.getElementById('latencyChart'), {
         type: 'bar',
         data: {
-          labels: ['Login', 'Summary', 'Category'],
+          labels: ["Login","Summary","Category","TeacherRegister","TeacherLogin","CourseSearch","CreditProgress","StudentRecords"],
           datasets: [
             {
               label: '中位數延遲 (p50)',
-              data: [45.1, 48.0, 0.0],
+              data: [44.7,51.9,44,51.9,43.9,2.3,26.1,47.6],
               backgroundColor: '#93c5fd'
             },
             {
               label: '九成用戶延遲 (p90)',
-              data: [49.1, 55.9, 0.0],
+              data: [46.8,55.5,47.9,55.8,47.9,2.9,49.9,51.3],
               backgroundColor: '#3b82f6'
             },
             {
               label: '高壓臨界延遲 (p95)',
-              data: [49.8, 60.0, 0.0],
+              data: [48.2,56.2,48,56,48.1,3.1,50.3,52],
               backgroundColor: '#4f46e5'
             }
           ]
         },
         options: { 
           responsive: true, 
+          indexAxis: 'y', 
           plugins: { legend: { position: 'bottom' } },
-          scales: { y: { beginAtZero: true, title: { display: true, text: 'Milliseconds (ms)' } } } 
+          scales: { x: { beginAtZero: true, title: { display: true, text: 'Milliseconds (ms)' } } } 
         }
       });
 
-      // 📊 2. 流量分配權重圓餅圖 (依據各 API 實際呼叫次數)
-      new Chart(document.getElementById('apiChart'), {
-        type: 'doughnut',
-        data: {
-          labels: ['Login', 'Summary', 'Category'],
-          datasets: [{
-            data: [269, 269, 0],
-            backgroundColor: ['#10b981', '#f59e0b', '#ec4899'],
-            borderWidth: 4,
-            borderColor: '#ffffff'
-          }]
-        },
-        options: { 
-          responsive: true,
-          plugins: { legend: { position: 'bottom' } }
-        }
-      });
+      // 💡 核心修改三：此處已完全拔除 apiChart 圓餅圖的 JS 建構式，防止因 Canvas 遺失噴錯
     </script>
   </body>
   </html>
