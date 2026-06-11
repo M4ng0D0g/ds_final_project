@@ -371,3 +371,145 @@ async def get_credit_progress(
             code="INTERNAL_SERVER_ERROR",
             message=f"系統發生非預期錯誤，請稍後再試。錯誤細節: {str(e)}"
         )
+
+@router.get(
+    "/students/{student_id}", 
+    response_model=JSendSuccessResponse[list]
+)
+async def get_course_records(student_id: str, user: dict = Depends(get_user), db: AsyncSession = Depends(get_db)):
+    """取得特定學分區塊的詳細進度與課程清單（用於點擊 Block 後跳轉的新頁面）"""
+    if user.get("role") != "teacher":
+        raise APIFailException(
+            code="UNAUTHORIZED",
+            message="使用者身份不是教師"
+        )
+        
+    teacher = (await db.execute(
+        select(TeacherAccount).where(TeacherAccount.teacher_id == user["id"])
+    )).scalar()
+    student = (await db.execute(
+        select(StudentAccount).where(StudentAccount.student_id == student_id)
+    )).scalar()
+
+    if student is None:
+        return APIFailException(
+            code="BAD_REQUEST",
+            message="學生不存在"
+        )
+    elif student.department_major1 != teacher.department_id:
+        return APIFailException(
+            code="BAD_REQUEST",
+            message="該學生不屬於本系"
+        )
+    data = []
+        
+    for category_id in ["major1", "out_department", "general_edu", "common_compulsory", "major2", "auxiliary1", "auxiliary2"]:
+        match category_id:
+            case "major1":
+                stmt = (select(CourseInformation, CourseRecord)
+                        .where(CourseInformation.course_id == CourseRecord.course_id,
+                            CourseRecord.student_id == student.student_id, 
+                            CourseRecord.course_id.in_(
+                                    select(RequirementCourseMapping.course_id)
+                                    .join(RequirementRule)
+                                    .where(RequirementRule.department_id == student.department_major1)
+                                )
+                        )
+                )
+                
+            case "out_department":
+                stmt = (select(CourseInformation, CourseRecord)
+                    .where(CourseInformation.course_id == CourseRecord.course_id,
+                        CourseRecord.student_id == student.student_id, 
+                        CourseInformation.course_type.in_(["R", "P", "E"]),
+                        CourseRecord.course_id.not_in(
+                                    select(RequirementCourseMapping.course_id)
+                                    .join(RequirementRule)
+                                    .where(RequirementRule.department_id == student.department_major1)
+                                )
+                    )
+                )
+                
+            case "general_edu":
+                stmt = (select(CourseInformation, CourseRecord)
+                    .where(CourseInformation.course_id == CourseRecord.course_id,
+                        CourseRecord.student_id == student.student_id, 
+                        CourseInformation.course_type.ilike("%G%"),
+                    )
+                )
+                
+            case "common_compulsory":
+                stmt = (select(CourseInformation, CourseRecord)
+                    .where(CourseInformation.course_id == CourseRecord.course_id,
+                        CourseRecord.student_id == student.student_id, 
+                        CourseInformation.course_type == "RPE"
+                    )
+                )
+            case "major2":
+                if student.department_major2:
+                    stmt = (select(CourseInformation, CourseRecord)
+                            .where(CourseInformation.course_id == CourseRecord.course_id,
+                                CourseRecord.student_id == student.student_id, 
+                                CourseRecord.course_id.in_(
+                                        select(RequirementCourseMapping.course_id)
+                                        .join(RequirementRule)
+                                        .where(RequirementRule.department_id == student.department_major2)
+                                    )
+                            )
+                    )
+                else:
+                    continue
+            case "auxiliary1":
+                if student.department_auxiliary1:
+                    stmt = (select(CourseInformation, CourseRecord)
+                            .where(CourseInformation.course_id == CourseRecord.course_id,
+                                CourseRecord.student_id == student.student_id, 
+                                CourseRecord.course_id.in_(
+                                        select(RequirementCourseMapping.course_id)
+                                        .join(RequirementRule)
+                                        .where(RequirementRule.department_id == student.department_auxiliary1)
+                                    )
+                            )
+                    )
+                else:
+                    continue
+            case "auxiliary2":
+                if student.department_auxiliary2:
+                    stmt = (select(CourseInformation, CourseRecord)
+                            .where(CourseInformation.course_id == CourseRecord.course_id,
+                                CourseRecord.student_id == student.student_id, 
+                                CourseRecord.course_id.in_(
+                                        select(RequirementCourseMapping.course_id)
+                                        .join(RequirementRule)
+                                        .where(RequirementRule.department_id == student.department_auxiliary2)
+                                    )
+                            )
+                    )
+                else:
+                    continue
+            case _:
+                raise APIFailException(
+                    code = "Category Not Found",
+                    message= "無效的類別 ID",
+                    status_code=404
+                )
+        result = await db.execute(stmt)
+        courses = []
+        for row in result.mappings():
+            courses.append(
+                {
+                    "course_id": row["CourseInformation"].course_id,
+                    "course_name": row["CourseInformation"].course_name,
+                    "course_type": row["CourseInformation"].course_type,
+                    "teacher_name": row["CourseInformation"].teacher_name,
+                    "department_id": row["CourseInformation"].department_id,
+                    "credits": row["CourseInformation"].credits,
+                    "grade": row["CourseRecord"].grade,
+                    "semester": row["CourseRecord"].semester,
+                    "status": row["CourseRecord"].status
+                }
+            )
+        data.append({"id":category_id, "courses":courses})
+    return {
+        "data": data
+    }
