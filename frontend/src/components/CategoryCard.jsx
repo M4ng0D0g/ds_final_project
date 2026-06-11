@@ -33,7 +33,8 @@ const CategoryCard = ({
   const pct = (cat.earned / cat.required) * 100;
   const radius = size * 0.42;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (pct / 100) * circumference;
+  const strokeDashoffset =
+    circumference - Math.min(pct / 100, 1) * circumference;
 
   const planetStyle = {
     width: `${size}px`,
