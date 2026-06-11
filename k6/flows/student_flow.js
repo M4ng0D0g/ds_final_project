@@ -8,8 +8,6 @@ export function studentFlow(studentId) {
   // =========================
   // 1️⃣ REGISTER (idempotent)
   // =========================
-  const t0 = Date.now();
-
   const registerRes = http.post(
     `${BASE_URL}/v1/auth/register/student`,
     JSON.stringify({
@@ -21,10 +19,8 @@ export function studentFlow(studentId) {
     { headers }
   );
 
-  const registerLatency = Date.now() - t0;
-  metrics.register.add(registerLatency);
+  metrics.register.add(registerRes.timings.duration);
 
-  // 409 = already exists (OK for load test)
   const registerOk =
     registerRes.status === 200 ||
     registerRes.status === 201 ||
@@ -39,8 +35,6 @@ export function studentFlow(studentId) {
   // =========================
   // 2️⃣ LOGIN
   // =========================
-  const t1 = Date.now();
-
   const loginRes = http.post(
     `${BASE_URL}/v1/auth/login`,
     JSON.stringify({
@@ -50,7 +44,7 @@ export function studentFlow(studentId) {
     { headers }
   );
 
-  metrics.login.add(Date.now() - t1);
+  metrics.login.add(loginRes.timings.duration);
 
   if (loginRes.status !== 200) {
     metrics.errors.add(1);
@@ -75,31 +69,40 @@ export function studentFlow(studentId) {
   };
 
   // =========================
-  // 3️⃣ SUMMARY
+  // 3️⃣ SUMMARY (已修正)
   // =========================
-  const t2 = Date.now();
-  const res1 = http.post(`${BASE_URL}/v1/graduation/summary`, null, auth);
+  // 修正點：將 null 改為空字串 ""，避免 FastAPI 在處理 application/json 時因 null 觸發解包崩潰
+  // 優化點：改用 k6 內建的精準 timings 數據
+  const res1 = http.post(`${BASE_URL}/v1/graduation/summary`, "", auth);
 
-  metrics.summary.add(Date.now() - t2);
+  metrics.summary.add(res1.timings.duration);
 
   check(res1, { 'summary ok': r => r.status === 200 });
 
   if (res1.status !== 200) {
     metrics.errors.add(1);
+    // 補上 Summary 專屬的除錯雷達，直接印出原始 body 字串，絕不噴出 [object Object]
+    console.log(`❌ Summary failed | ${res1.status} | ${res1.body}`);
   }
 
   // =========================
   // 4️⃣ CATEGORY
   // =========================
-  const t3 = Date.now();
-  const res2 = http.get(`${BASE_URL}/v1/graduation/categories/major1`, auth);
+  // 修正點：在請求的 options 中加入 tags.name，強行指引 html_report.js 進行歸類
+  const categoryParams = {
+    headers: auth.headers,
+    tags: { name: 'Category' } // 如果報表是比對英文，用 'Category'；若比對中文則改為 'Category (分類查詢)'
+  };
 
-  metrics.category.add(Date.now() - t3);
+  const res2 = http.get(`${BASE_URL}/v1/graduation/categories/major1`, categoryParams);
+
+  metrics.category.add(res2.timings.duration);
 
   check(res2, { 'category ok': r => r.status === 200 });
 
   if (res2.status !== 200) {
     metrics.errors.add(1);
+    console.log(`❌ Category failed | ${res2.status} | ${res2.body}`);
   }
 
   return token;

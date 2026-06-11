@@ -1,3 +1,4 @@
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE student_account;
+TRUNCATE TABLE teacher_account;
 SET FOREIGN_KEY_CHECKS = 1;
