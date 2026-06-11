@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from "react";
 import Dashboard from "./views/Dashboard";
+import TeacherDashboard from "./views/TeacherDashboard";
 import DetailView from "./views/DetailView";
 import Login from "./views/Login";
 
@@ -43,7 +44,20 @@ function App() {
     );
   }
 
-  // Render both views and animate the transition between them for a smooth experience.
+  if (userRole === "teacher") {
+    return (
+      <div
+        style={{
+          fontFamily: "'Noto Sans TC', 'PingFang TC', system-ui",
+          minHeight: "100vh",
+        }}
+      >
+        <TeacherDashboard onLogout={handleLogout} token={token} />
+      </div>
+    );
+  }
+
+  // Render the student dashboard and detail view overlay.
   return (
     <div
       style={{

@@ -107,3 +107,11 @@ export const importStudentData = async (token, file) => {
   }
   return body;
 };
+
+export const teacherGetStudentDetail = async (token, id) => {
+  const response = await fetchJSON(`${API_BASE}/teachers/students/${id}`, {
+    method: "GET",
+    headers: buildHeaders(token),
+  });
+  return response;
+};
