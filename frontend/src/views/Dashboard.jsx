@@ -192,7 +192,7 @@ const ImportModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
               type="file"
               onChange={handleFileChange}
               style={{ display: "none" }}
-              accept=".csv,.xlsx,.xls,.json"
+              accept=".json"
             />
             {selectedFile ? (
               <div style={{ textAlign: "center" }}>
