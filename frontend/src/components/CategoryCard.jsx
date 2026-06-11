@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 const WarnIcon = ({ size }) => (
   <svg width={size} height={size} viewBox="0 0 20 20">
@@ -28,11 +28,13 @@ const CategoryCard = ({
   onClick,
   onDetailClick,
   onSelect,
+  loading,
 }) => {
   const pct = (cat.earned / cat.required) * 100;
   const radius = size * 0.42;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (pct / 100) * circumference;
+  const strokeDashoffset =
+    circumference - Math.min(pct / 100, 1) * circumference;
 
   const planetStyle = {
     width: `${size}px`,
@@ -129,7 +131,9 @@ const CategoryCard = ({
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
-            style={{ transition: "stroke-dashoffset 1s ease-out" }}
+            style={{
+              transition: "stroke-dashoffset 1s ease-out",
+            }}
           />
         </svg>
 

@@ -39,3 +39,17 @@ table {
     transform: translateY(0) scale(1);
   }
 }
+
+@keyframes drawCircle {
+  from {
+    stroke-dashoffset: var(--circumference);
+  }
+  to {
+    stroke-dashoffset: var(--target-offset);
+  }
+}
+
+.animate-circle-once {
+  /* Runs once, takes 1 second, stays at the 'to' position forever */
+  animation: drawCircle 1s ease-out forwards;
+}

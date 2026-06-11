@@ -1,11 +1,7 @@
 ﻿import React, { useState, useEffect, useRef, useMemo } from "react";
 import CategoryCard from "../components/CategoryCard";
 import HintBox from "../components/HintBox";
-import {
-  getDashboardSummary,
-  importStudentData,
-  getTeacherStudentCreditProgress,
-} from "../api";
+import { getDashboardSummary, importStudentData } from "../api";
 
 const CATEGORY_COLORS = [
   { fromColor: "#FF8A3D", toColor: "#FF3D3D" },
@@ -196,7 +192,7 @@ const ImportModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
               type="file"
               onChange={handleFileChange}
               style={{ display: "none" }}
-              accept=".csv,.xlsx,.xls,.json"
+              accept=".json"
             />
             {selectedFile ? (
               <div style={{ textAlign: "center" }}>
@@ -226,9 +222,7 @@ const ImportModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
                 >
                   點擊選擇檔案
                 </div>
-                <div style={{ fontSize: "12px" }}>
-                  支援: CSV, XLSX, XLS, JSON
-                </div>
+                <div style={{ fontSize: "12px" }}>僅支援JSON</div>
               </div>
             )}
           </div>
@@ -650,61 +644,8 @@ const Dashboard = ({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [teacherResults, setTeacherResults] = useState([]);
-  const [teacherLoading, setTeacherLoading] = useState(false);
-  const [teacherError, setTeacherError] = useState(null);
-  const [selectedEnrollmentYears, setSelectedEnrollmentYears] = useState([
-    "111",
-    "112",
-    "113",
-    "114",
-  ]);
 
   const toggleSidebar = () => setSidebarOpen((v) => !v);
-
-  const handleToggleEnrollmentYear = (year) => {
-    setSelectedEnrollmentYears((prev) =>
-      prev.includes(year)
-        ? prev.filter((item) => item !== year)
-        : [...prev, year],
-    );
-  };
-
-  useEffect(() => {
-    const fetchTeacherStudents = async () => {
-      if (!token || role !== "teacher") return;
-      if (selectedEnrollmentYears.length === 0) {
-        setTeacherResults([]);
-        setTeacherError(null);
-        setTeacherLoading(false);
-        return;
-      }
-
-      setTeacherLoading(true);
-      setTeacherError(null);
-      try {
-        const responses = await Promise.all(
-          selectedEnrollmentYears.map((year) =>
-            getTeacherStudentCreditProgress(token, year),
-          ),
-        );
-
-        const results = responses.flatMap((response, index) => {
-          const year = selectedEnrollmentYears[index];
-          const data = response?.data || [];
-          return data.map((item) => ({ ...item, enrollment_year: year }));
-        });
-
-        setTeacherResults(results);
-      } catch (err) {
-        setTeacherError(err.message || "無法取得學生資料");
-      } finally {
-        setTeacherLoading(false);
-      }
-    };
-
-    fetchTeacherStudents();
-  }, [token, role, selectedEnrollmentYears]);
 
   const handleImportConfirm = async (file) => {
     setIsImporting(true);
@@ -772,10 +713,8 @@ const Dashboard = ({
       }
     };
 
-    if (token && role !== "teacher") {
+    if (token) {
       fetchData();
-    } else if (token && role === "teacher") {
-      setLoading(false);
     }
   }, [token, role]);
 
@@ -884,9 +823,7 @@ const Dashboard = ({
   }
 
   const data = dashboard;
-  const isTeacherView = role === "teacher";
   const displayYear = data?.catalogYear || new Date().getFullYear();
-  const teacherLastUpdated = new Date().toLocaleDateString("zh-TW");
 
   return (
     <div
@@ -894,7 +831,7 @@ const Dashboard = ({
         height: "100vh",
         display: "flex",
         flexDirection: "column",
-        overflowY: isTeacherView ? "auto" : "hidden",
+        overflowY: "hidden",
         overflowX: "hidden",
         background: "#F6FFEA",
         position: "relative",
@@ -984,10 +921,10 @@ const Dashboard = ({
           alignItems: "flex-start",
           zIndex: 10,
           pointerEvents: "none",
-          position: isTeacherView ? "sticky" : "relative",
-          top: isTeacherView ? 0 : "auto",
-          background: isTeacherView ? "#111827" : "transparent",
-          boxShadow: isTeacherView ? "0 12px 30px rgba(0, 0, 0, 0.35)" : "none",
+          position: "relative",
+          top: "auto",
+          background: "transparent",
+          boxShadow: "none",
         }}
       >
         <div style={{ pointerEvents: "none" }}>
@@ -995,7 +932,7 @@ const Dashboard = ({
             style={{
               fontSize: "12px",
               fontWeight: 800,
-              color: isTeacherView ? "#CBD5E1" : "#8B7030",
+              color: "#8B7030",
               textTransform: "uppercase",
               letterSpacing: "1px",
             }}
@@ -1015,7 +952,7 @@ const Dashboard = ({
               style={{
                 fontSize: "26px",
                 fontWeight: 900,
-                color: isTeacherView ? "#FFFFFF" : "#3A2000",
+                color: "#3A2000",
                 margin: 0,
               }}
             >
@@ -1023,8 +960,8 @@ const Dashboard = ({
             </h1>
             <div
               style={{
-                background: isTeacherView ? "#FBBF24" : "#FFDE96",
-                color: isTeacherView ? "#111827" : "#6B4400",
+                background: "#FFDE96",
+                color: "#6B4400",
                 borderRadius: "8px",
                 padding: "3px 10px",
                 fontSize: "13px",
@@ -1034,7 +971,7 @@ const Dashboard = ({
               {displayYear}
             </div>
           </div>
-          {!isTeacherView && data?.studentInfo && (
+          {data?.studentInfo && (
             <div
               style={{
                 display: "flex",
@@ -1229,30 +1166,28 @@ const Dashboard = ({
                 marginTop: "8px",
               }}
             >
-              {!isTeacherView && (
-                <button
-                  onClick={() => {
-                    setIsImportModalOpen(true);
-                    setSidebarOpen(false);
-                  }}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #F0E0B0",
-                    background: "#FFF8DC",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    fontWeight: 800,
-                    color: "#3A2000",
-                  }}
-                >
-                  📁 匯入資料
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  setIsImportModalOpen(true);
+                  setSidebarOpen(false);
+                }}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #F0E0B0",
+                  background: "#FFF8DC",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontWeight: 800,
+                  color: "#3A2000",
+                }}
+              >
+                📁 匯入資料
+              </button>
               {data?.categories?.map((cat) => (
                 <button
                   key={cat.id}
@@ -1308,291 +1243,12 @@ const Dashboard = ({
           transform: "translateY(-60px)",
         }}
       >
-        {isTeacherView ? (
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              padding: "72px 40px 24px",
-              boxSizing: "border-box",
-              overflowY: "auto",
-              background: "rgba(255,255,255,0.72)",
-              borderRadius: "28px",
-              border: "1px solid rgba(200,168,48,0.12)",
-              backdropFilter: "blur(12px)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "center",
-                gap: "12px",
-                marginBottom: "24px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "16px",
-                  fontWeight: 800,
-                  color: "#3A2000",
-                }}
-              >
-                選擇入學年級
-              </div>
-              {["111", "112", "113", "114"].map((year) => (
-                <label
-                  key={year}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    color: "#3A2000",
-                    userSelect: "none",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedEnrollmentYears.includes(year)}
-                    onChange={() => handleToggleEnrollmentYear(year)}
-                    style={{
-                      width: "16px",
-                      height: "16px",
-                      accentColor: "#4a90e2",
-                    }}
-                  />
-                  {year}
-                </label>
-              ))}
-            </div>
-
-            <div
-              style={{
-                marginBottom: "24px",
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "space-between",
-                gap: "12px",
-                alignItems: "center",
-              }}
-            >
-              <div style={{ color: "#4d5868", fontSize: "14px" }}>
-                已選擇年級：
-                {selectedEnrollmentYears.length > 0
-                  ? selectedEnrollmentYears.join("、")
-                  : "請至少選擇一個年級"}
-              </div>
-              <div
-                style={{ fontSize: "14px", fontWeight: 700, color: "#3A2000" }}
-              >
-                共 {teacherResults.length} 位學生
-              </div>
-            </div>
-
-            {teacherError && (
-              <div
-                style={{
-                  padding: "16px",
-                  background: "#fee",
-                  border: "1px solid #fcc",
-                  borderRadius: "14px",
-                  color: "#c33",
-                  marginBottom: "24px",
-                }}
-              >
-                {teacherError}
-              </div>
-            )}
-
-            {teacherLoading ? (
-              <div
-                style={{
-                  minHeight: "280px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#4a90e2",
-                  fontWeight: 700,
-                }}
-              >
-                載入中，請稍候...
-              </div>
-            ) : teacherResults.length === 0 ? (
-              <div
-                style={{
-                  minHeight: "280px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#666",
-                  fontSize: "15px",
-                }}
-              >
-                尚未有符合條件的學生資料。
-              </div>
-            ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                  gap: "20px",
-                }}
-              >
-                {teacherResults.map((student) => (
-                  <div
-                    key={
-                      student.student_info.student_id + student.enrollment_year
-                    }
-                    style={{
-                      background: "#fff",
-                      borderRadius: "20px",
-                      padding: "18px",
-                      boxShadow: "0 16px 40px rgba(0,0,0,0.05)",
-                      border: "1px solid rgba(200,168,48,0.12)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        marginBottom: "12px",
-                        gap: "12px",
-                      }}
-                    >
-                      <div>
-                        <div
-                          style={{
-                            fontSize: "16px",
-                            fontWeight: 800,
-                            color: "#3A2000",
-                          }}
-                        >
-                          {student.student_info.name}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "13px",
-                            color: "#6B4400",
-                            marginTop: "4px",
-                          }}
-                        >
-                          {student.student_info.student_id} •{" "}
-                          {student.student_info.major1}
-                        </div>
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          color: student.student_info.is_pass
-                            ? "#22896e"
-                            : "#c33",
-                          fontWeight: 700,
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {student.student_info.is_pass ? "合格" : "未通過"}
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        padding: "12px 14px",
-                        background: "#f8faf9",
-                        borderRadius: "14px",
-                        marginBottom: "16px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "14px",
-                          fontWeight: 700,
-                          color: "#3A2000",
-                          marginBottom: "6px",
-                        }}
-                      >
-                        總學分
-                      </div>
-                      <div style={{ color: "#4d5868", fontSize: "13px" }}>
-                        {student.total_credits.earned} /{" "}
-                        {student.total_credits.required}
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "12px",
-                      }}
-                    >
-                      {student.categories.map((category) => (
-                        <div
-                          key={category.id}
-                          style={{
-                            padding: "12px 14px",
-                            background: "#fff",
-                            borderRadius: "14px",
-                            border: "1px solid rgba(224, 224, 224, 0.9)",
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              marginBottom: "8px",
-                            }}
-                          >
-                            <div
-                              style={{
-                                fontSize: "14px",
-                                fontWeight: 700,
-                                color: "#3A2000",
-                              }}
-                            >
-                              {category.name}
-                            </div>
-                            <div
-                              style={{
-                                fontSize: "13px",
-                                color: "#6B4400",
-                                fontWeight: 700,
-                              }}
-                            >
-                              {category.earned} / {category.required}
-                            </div>
-                          </div>
-                          {category.hint && (
-                            <div
-                              style={{
-                                fontSize: "12px",
-                                color: "#666",
-                                whiteSpace: "pre-wrap",
-                                lineHeight: 1.5,
-                              }}
-                            >
-                              {category.hint}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          <OrbitSystem
-            data={data}
-            onDetail={onDetail}
-            angles={planetAngles}
-            setAngles={setPlanetAngles}
-          />
-        )}
+        <OrbitSystem
+          data={data}
+          onDetail={onDetail}
+          angles={planetAngles}
+          setAngles={setPlanetAngles}
+        />
       </div>
 
       {/* Footer */}
@@ -1603,10 +1259,10 @@ const Dashboard = ({
           fontSize: "11px",
           color: "#9A8050",
           zIndex: 10,
+          pointerEvents: "none",
         }}
       >
-        最後更新：{isTeacherView ? teacherLastUpdated : data.lastUpdated} |
-        系統維護：(02) 2345-6789 #123
+        最後更新：{data.lastUpdated} | 系統維護：(02) 2345-6789 #123
       </footer>
     </div>
   );
