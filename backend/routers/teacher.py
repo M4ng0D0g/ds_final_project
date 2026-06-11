@@ -227,6 +227,10 @@ async def get_credit_progress(
                     general[course_type] += credits
                 elif course_type == "RPE":
                     rpe_credits += credits
+                else:
+                    domains = list(row["course_type"].strip("G"))
+                    target_domain = min(domains, key=lambda d: general[f"G{d}"])
+                    general[f"G{target_domain}"] += credits
 
             GC_earned = min(GC_earned, 6)
             GF_earned = min(GF_earned, 6)
